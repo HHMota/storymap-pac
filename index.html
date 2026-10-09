@@ -1,0 +1,1715 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#6B8E23">
+<title>🌾 A Agricultura Portuguesa e a PAC — Storymap v2.0</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Open+Sans:wght@400;600&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --verde: #6B8E23;
+  --dourado: #DAA520;
+  --azul: #003399;
+  --bege: #F5F5DC;
+  --vermelho: #C84B31;
+  --branco: #fff;
+  --cinza: #333;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Open Sans', sans-serif;
+  background: var(--bege);
+  color: var(--cinza);
+  line-height: 1.6;
+}
+
+h1, h2, h3 { font-family: 'Montserrat', sans-serif; }
+
+/* ===== BARRA DE PROGRESSO GLOBAL ===== */
+.progresso-global {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  height: 6px;
+  background: rgba(0,0,0,0.1);
+  z-index: 2000;
+}
+
+.progresso-barra {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--verde), var(--dourado));
+  transition: width 0.6s ease;
+}
+
+/* ===== TOAST "CENA CONCLUÍDA" ===== */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--verde);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 30px;
+  font-weight: 700;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+  z-index: 2100;
+  transition: transform 0.4s ease;
+  pointer-events: none;
+}
+
+.toast.visivel { transform: translateX(-50%) translateY(0); }
+
+/* ===== MENU ===== */
+.menu-toggle {
+  position: fixed;
+  top: 15px; right: 15px;
+  z-index: 1100;
+  background: var(--verde);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px; height: 50px;
+  font-size: 1.5em;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+}
+
+nav {
+  position: fixed;
+  top: 0; left: -100%;
+  width: 80%;
+  max-width: 320px;
+  height: 100vh;
+  background: white;
+  z-index: 1050;
+  transition: left 0.3s;
+  overflow-y: auto;
+  padding: 80px 20px 20px;
+  box-shadow: 5px 0 20px rgba(0,0,0,0.2);
+}
+
+nav.aberto { left: 0; }
+nav ul { list-style: none; }
+nav li { border-bottom: 1px solid #eee; padding: 12px 0; }
+nav a { text-decoration: none; color: var(--azul); font-weight: 600; }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1040;
+  display: none;
+}
+.overlay.ativo { display: block; }
+
+/* ===== CENAS ===== */
+.cena {
+  min-height: 100vh;
+  padding: 80px 15px 40px;
+}
+
+.cena-container { max-width: 1100px; margin: 0 auto; }
+
+.cena-titulo {
+  font-size: 1.6em;
+  color: var(--azul);
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.cena-titulo::after {
+  content: '';
+  display: block;
+  width: 60px;
+  height: 3px;
+  background: var(--dourado);
+  margin: 10px auto 0;
+}
+
+.cena-texto {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.btn-audio {
+  background: var(--azul);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 44px; height: 44px;
+  font-size: 1.3em;
+  cursor: pointer;
+}
+
+.btn-audio.ativo { background: var(--vermelho); }
+
+.cena-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.btn-acao {
+  background: var(--dourado);
+  color: var(--cinza);
+  padding: 14px 32px;
+  border: none;
+  border-radius: 50px;
+  font-size: 1.1em;
+  font-weight: 700;
+  cursor: pointer;
+  margin: 10px 5px;
+}
+
+/* ===== TIMELINE HORIZONTAL ===== */
+.timeline-horizontal {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  margin: 40px 0;
+  padding: 0 10px;
+}
+
+.timeline-horizontal::before {
+  content: '';
+  position: absolute;
+  top: 30px;
+  left: 10%;
+  right: 10%;
+  height: 4px;
+  background: linear-gradient(90deg, var(--dourado), var(--verde), var(--azul));
+  z-index: 0;
+}
+
+.timeline-fase {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  width: 30%;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.timeline-fase:hover { transform: scale(1.05); }
+
+.timeline-fase-circulo {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8em;
+  margin: 0 auto 10px;
+  border: 4px solid white;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+}
+
+.timeline-fase:nth-child(1) .timeline-fase-circulo { background: #8B4513; }
+.timeline-fase:nth-child(2) .timeline-fase-circulo { background: var(--verde); }
+.timeline-fase:nth-child(3) .timeline-fase-circulo { background: var(--azul); }
+
+.timeline-fase-ano { font-weight: 900; color: var(--azul); }
+.timeline-fase-lema { font-size: 0.85em; color: #666; }
+
+.timeline-painel {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+  display: none;
+  animation: aparecer 0.4s ease;
+}
+
+.timeline-painel.ativo { display: block; }
+
+@keyframes aparecer {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ===== CARDS ===== */
+.cards-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  transition: transform 0.3s;
+}
+
+.card:hover { transform: translateY(-5px); }
+.card-icon { font-size: 2.5em; margin-bottom: 10px; }
+.card-titulo { color: var(--azul); font-weight: 700; margin-bottom: 8px; }
+
+/* ===== MAPAS ===== */
+.mapa-container {
+  width: 100%;
+  height: 400px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  margin: 15px 0;
+  background: #e8e8d0;
+}
+
+.grafico-container {
+  background: white;
+  padding: 15px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  margin: 20px 0;
+}
+
+.grafico-container h3 {
+  color: var(--azul);
+  text-align: center;
+  margin-bottom: 15px;
+  font-size: 1.05em;
+}
+
+/* ===== POPUPS RICOS LEAFLET ===== */
+.popup-rico {
+  min-width: 220px;
+}
+
+.popup-rico img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.popup-rico h4 {
+  color: var(--azul);
+  margin-bottom: 5px;
+}
+
+.popup-rico .tag {
+  display: inline-block;
+  background: var(--bege);
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.8em;
+  margin: 2px 2px 2px 0;
+}
+
+.popup-rico .desafio {
+  background: #ffebee;
+  padding: 6px;
+  border-radius: 6px;
+  margin-top: 6px;
+  font-size: 0.85em;
+  color: var(--vermelho);
+}
+
+.popup-rico .pac {
+  background: #e8f5e9;
+  padding: 6px;
+  border-radius: 6px;
+  margin-top: 4px;
+  font-size: 0.85em;
+  color: var(--verde);
+}
+
+/* ===== FLUXO ANIMADO ===== */
+@keyframes fluxo {
+  to { stroke-dashoffset: -100; }
+}
+
+.linha-fluxo {
+  stroke-dasharray: 10, 10;
+  animation: fluxo 3s linear infinite;
+}
+
+/* ===== QUIZZES ===== */
+.quiz-container {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  margin: 20px 0;
+  border-left: 5px solid var(--dourado);
+}
+
+.quiz-pergunta { font-weight: 600; color: var(--azul); margin-bottom: 15px; }
+
+.quiz-opcoes { display: flex; flex-direction: column; gap: 10px; }
+
+.quiz-opcao {
+  background: var(--bege);
+  padding: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all 0.3s;
+}
+
+.quiz-opcao:hover { border-color: var(--verde); }
+.quiz-opcao.correta { background: #d4edda; border-color: #28a745; }
+.quiz-opcao.incorreta { background: #f8d7da; border-color: #dc3545; }
+
+.quiz-feedback {
+  margin-top: 15px;
+  padding: 12px;
+  border-radius: 8px;
+  display: none;
+}
+
+.quiz-feedback.show { display: block; }
+.quiz-feedback.correto { background: #d4edda; color: #155724; }
+.quiz-feedback.incorreto { background: #f8d7da; color: #721c24; }
+
+/* ===== FLIP CARDS ===== */
+.flip-card {
+  perspective: 1000px;
+  height: 200px;
+}
+
+.flip-card-inner {
+  position: relative;
+  width: 100%; height: 100%;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+
+.flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+
+.flip-card-front, .flip-card-back {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  text-align: center;
+}
+
+.flip-card-front { background: var(--verde); color: white; }
+.flip-card-back { background: white; transform: rotateY(180deg); box-shadow: 0 5px 20px rgba(0,0,0,0.2); font-size: 0.9em; }
+
+/* ===== JOGO ===== */
+.jogo-painel {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.indicador {
+  text-align: center;
+  background: white;
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.indicador-valor { font-size: 1.5em; font-weight: 700; color: var(--azul); }
+
+.jogo-opcao {
+  background: white;
+  border: 2px solid #e0e0e0;
+  padding: 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  margin: 8px 0;
+  font-family: inherit;
+}
+
+.jogo-opcao:hover { border-color: var(--verde); }
+
+.jogo-feedback {
+  margin-top: 15px;
+  padding: 15px;
+  border-radius: 10px;
+  display: none;
+}
+
+.jogo-feedback.show { display: block; }
+.jogo-feedback.positivo { background: #d4edda; color: #155724; }
+.jogo-feedback.negativo { background: #f8d7da; color: #721c24; }
+.jogo-feedback.neutro { background: #fff3cd; color: #856404; }
+
+/* ===== DASHBOARD ===== */
+#dashboard {
+  background: linear-gradient(135deg, var(--azul), var(--verde));
+  color: white;
+}
+
+#dashboard .cena-titulo { color: white; }
+#dashboard .cena-titulo::after { background: var(--dourado); }
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.stat-card {
+  background: rgba(255,255,255,0.15);
+  padding: 15px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.stat-valor { font-size: 2em; font-weight: 900; color: var(--dourado); }
+
+.medalha {
+  text-align: center;
+  background: rgba(255,255,255,0.15);
+  padding: 25px;
+  border-radius: 15px;
+  margin: 20px 0;
+}
+
+.medalha-icon { font-size: 4em; }
+.medalha-titulo { font-size: 1.5em; font-weight: 900; margin-top: 10px; }
+
+.progresso-aluno {
+  background: rgba(255,255,255,0.95);
+  color: var(--cinza);
+  padding: 20px;
+  border-radius: 12px;
+  margin: 20px 0;
+}
+
+.input-nome {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid var(--dourado);
+  border-radius: 8px;
+  font-size: 1em;
+  margin: 10px 0;
+}
+
+.barra-progresso {
+  height: 20px;
+  background: #e0e0e0;
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+
+.barra-preenchimento {
+  height: 100%;
+  background: linear-gradient(90deg, var(--verde), var(--dourado));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 700;
+  font-size: 0.8em;
+  transition: width 0.8s;
+}
+
+.btn-limpar {
+  background: var(--vermelho);
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+/* ===== MEDIA QUERIES ===== */
+@media (min-width: 600px) {
+  .cards-grid { grid-template-columns: repeat(2, 1fr); }
+  .cena-titulo { font-size: 2em; }
+  .mapa-container { height: 450px; }
+}
+
+@media (min-width: 900px) {
+  .cards-grid { grid-template-columns: repeat(3, 1fr); }
+  .stats-grid { grid-template-columns: repeat(4, 1fr); }
+  .cena-titulo { font-size: 2.3em; }
+  .mapa-container { height: 500px; }
+  
+  .menu-toggle { display: none; }
+  nav {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: auto;
+    max-width: none;
+    padding: 15px;
+    display: flex;
+    justify-content: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+  nav ul { display: flex; gap: 20px; }
+  nav li { border: none; padding: 0; }
+  .overlay { display: none !important; }
+}
+
+.emoji-icon {
+  background: transparent !important;
+  border: none !important;
+  font-size: 1.6em;
+  text-align: center;
+}
+</style>
+</head>
+
+<body>
+
+<div class="progresso-global"><div class="progresso-barra" id="barra-global"></div></div>
+<div class="toast" id="toast">✅ Cena concluída!</div>
+
+<button class="menu-toggle" onclick="toggleMenu()">☰</button>
+<div class="overlay" id="overlay" onclick="toggleMenu()"></div>
+
+<nav id="menu">
+  <ul>
+    <li><a href="#cena1" onclick="toggleMenu()">🏠 Início</a></li>
+    <li><a href="#cena2" onclick="toggleMenu()">📜 1962</a></li>
+    <li><a href="#cena3" onclick="toggleMenu()">⚖️ Impactes</a></li>
+    <li><a href="#cena4" onclick="toggleMenu()">🔄 Fases</a></li>
+    <li><a href="#cena5" onclick="toggleMenu()">🇵🇹 Portugal</a></li>
+    <li><a href="#cena6" onclick="toggleMenu()">🎯 PAC 2023</a></li>
+    <li><a href="#cena7" onclick="toggleMenu()">🧩 Estratégias</a></li>
+    <li><a href="#cena8" onclick="toggleMenu()">🍓 Lusomorango</a></li>
+    <li><a href="#cena9" onclick="toggleMenu()">🌿 Biológico</a></li>
+    <li><a href="#jogo" onclick="toggleMenu()">🎮 Jogo</a></li>
+    <li><a href="#dashboard" onclick="toggleMenu()">📊 Dashboard</a></li>
+  </ul>
+</nav>
+
+<!-- CENA 1 -->
+<section id="cena1" class="cena" style="background:linear-gradient(135deg, var(--verde), var(--azul)); color:white; display:flex; align-items:center; text-align:center;">
+  <div class="cena-container">
+    <h1 class="cena-titulo" style="color:white;">Dos Campos de Europa aos Desafios de 2027</h1>
+    <p style="font-size:1.2em; font-weight:600;">🌾 A Viagem da PAC em Portugal</p>
+    <p>Como é que uma política nascida em 1962 molda o que comemos hoje?</p>
+    <button class="btn-acao" onclick="document.getElementById('cena2').scrollIntoView({behavior:'smooth'})">🚀 Iniciar Viagem</button>
+  </div>
+</section>
+
+<!-- CENA 2 -->
+<section id="cena2" class="cena">
+  <div class="cena-container">
+    <div class="cena-header">
+      <h2 class="cena-titulo" style="margin:0;">1962: O Nascimento da PAC</h2>
+      <button class="btn-audio" onclick="narrar(this,'txt2')">🔊</button>
+    </div>
+    <div id="txt2" class="cena-texto">No pós-guerra, a Europa precisava de alimentar a sua população. Em 1962 nasce a PAC, com 5 objetivos e 3 princípios fundamentais.</div>
+    
+    <div class="cards-grid">
+      <div class="card"><div class="card-icon">🚜</div><div class="card-titulo">Produtividade</div><p>Incrementar a produtividade agrícola</p></div>
+      <div class="card"><div class="card-icon">🌾</div><div class="card-titulo">Abastecimento</div><p>Garantir a segurança dos abastecimentos</p></div>
+      <div class="card"><div class="card-icon">👨‍🌾</div><div class="card-titulo">Nível de Vida</div><p>Nível de vida equitativo aos agricultores</p></div>
+      <div class="card"><div class="card-icon">📊</div><div class="card-titulo">Mercados</div><p>Estabilizar os mercados</p></div>
+      <div class="card"><div class="card-icon">🛒</div><div class="card-titulo">Consumidores</div><p>Preços razoáveis</p></div>
+    </div>
+    
+    <div class="cards-grid">
+      <div class="card"><div class="card-icon">🏛️</div><div class="card-titulo">Unicidade do Mercado</div><p>Livre circulação entre estados-membros</p></div>
+      <div class="card"><div class="card-icon">🛡️</div><div class="card-titulo">Preferência Comunitária</div><p>Produtos UE mais competitivos</p></div>
+      <div class="card"><div class="card-icon">💰</div><div class="card-titulo">Solidariedade Financeira</div><p>Custos suportados pelo orçamento comum</p></div>
+    </div>
+    
+    <div class="quiz-container">
+      <div class="quiz-pergunta">🤔 Qual NÃO era um objetivo original da PAC em 1962?</div>
+      <div class="quiz-opcoes">
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q2','historia')">A) Incrementar a produtividade</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,true,'q2','historia')">B) Promover a agricultura biológica</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q2','historia')">C) Garantir abastecimentos</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q2','historia')">D) Preços razoáveis</div>
+      </div>
+      <div id="q2-feedback" class="quiz-feedback"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CENA 3 -->
+<section id="cena3" class="cena">
+  <div class="cena-container">
+    <div class="cena-header">
+      <h2 class="cena-titulo" style="margin:0;">Luzes e Sombras</h2>
+      <button class="btn-audio" onclick="narrar(this,'txt3')">🔊</button>
+    </div>
+    <div id="txt3" class="cena-texto">A PAC teve impactos positivos e negativos. A Europa conseguiu autossuficiência, mas surgiram excedentes e problemas ambientais.</div>
+    
+    <div class="cards-grid">
+      <div class="card" style="border-left:5px solid var(--verde);">
+        <div class="card-icon">✅</div>
+        <div class="card-titulo" style="color:var(--verde);">Positivos</div>
+        <ul style="list-style:none;">
+          <li>✓ Forte aumento da produção</li>
+          <li>✓ Autossuficiência alimentar</li>
+          <li>✓ Melhoria do rendimento</li>
+          <li>✓ Modernização</li>
+        </ul>
+      </div>
+      <div class="card" style="border-left:5px solid var(--vermelho);">
+        <div class="card-icon">❌</div>
+        <div class="card-titulo" style="color:var(--vermelho);">Negativos</div>
+        <ul style="list-style:none;">
+          <li>✗ Excedentes agrícolas</li>
+          <li>✗ Custos de armazenamento</li>
+          <li>✗ Problemas ambientais</li>
+          <li>✗ Peso no orçamento</li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="quiz-container">
+      <div class="quiz-pergunta">🤔 Qual foi o principal paradoxo da primeira PAC?</div>
+      <div class="quiz-opcoes">
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q3','impactos')">A) Produziu-se pouco</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,true,'q3','impactos')">B) Produziu-se demasiado sem conseguir escoar</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q3','impactos')">C) Agricultores ficaram pobres</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q3','impactos')">D) Preços altos</div>
+      </div>
+      <div id="q3-feedback" class="quiz-feedback"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CENA 4 - TIMELINE HORIZONTAL -->
+<section id="cena4" class="cena">
+  <div class="cena-container">
+    <h2 class="cena-titulo">Três Fases da Evolução</h2>
+    <div class="cena-texto" id="txt4">Clica em cada fase para explorar. 👇</div>
+    
+    <div class="timeline-horizontal">
+      <div class="timeline-fase" onclick="mostrarFase(0)">
+        <div class="timeline-fase-circulo">🌾</div>
+        <div class="timeline-fase-ano">1962</div>
+        <div class="timeline-fase-lema">Produzir Mais</div>
+      </div>
+      <div class="timeline-fase" onclick="mostrarFase(1)">
+        <div class="timeline-fase-circulo">🌱</div>
+        <div class="timeline-fase-ano">1992</div>
+        <div class="timeline-fase-lema">Produzir Melhor</div>
+      </div>
+      <div class="timeline-fase" onclick="mostrarFase(2)">
+        <div class="timeline-fase-circulo">♻️</div>
+        <div class="timeline-fase-ano">2023</div>
+        <div class="timeline-fase-lema">Produzir Sustentável</div>
+      </div>
+    </div>
+    
+    <div class="timeline-painel" id="painel-fase">
+      <h3 id="fase-titulo" style="color:var(--azul);"></h3>
+      <p id="fase-texto" style="margin-top:10px;"></p>
+    </div>
+    
+    <div class="grafico-container">
+      <h3>📊 Evolução do Peso da PAC no Orçamento da UE</h3>
+      <canvas id="grafico-orcamento"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- CENA 5 - PORTUGAL -->
+<section id="cena5" class="cena">
+  <div class="cena-container">
+    <div class="cena-header">
+      <h2 class="cena-titulo" style="margin:0;">🇵🇹 Portugal Entra na PAC (1986)</h2>
+      <button class="btn-audio" onclick="narrar(this,'txt5')">🔊</button>
+    </div>
+    <div id="txt5" class="cena-texto">A integração trouxe progressos mas também recuos. Explora o mapa: clica nas regiões para descobrir produtos, desafios e apoios da PAC.</div>
+    
+    <div class="grafico-container">
+      <h3>🗺️ Regiões Agrícolas de Portugal — clica para explorar</h3>
+      <div id="mapa-nuts" class="mapa-container"></div>
+    </div>
+    
+    <div class="grafico-container">
+      <h3>🏜️ Abandono Rural por Região (intensidade)</h3>
+      <div id="mapa-abandono" class="mapa-container"></div>
+    </div>
+    
+    <div class="cards-grid">
+      <div class="card" style="border-left:5px solid var(--verde);">
+        <div class="card-icon">📈</div>
+        <div class="card-titulo" style="color:var(--verde);">Progressos</div>
+        <ul style="list-style:none;">
+          <li>✓ Produção animal</li>
+          <li>✓ Explorações > 50 ha</li>
+          <li>✓ Infraestruturas fundiárias</li>
+          <li>✓ Formação profissional</li>
+        </ul>
+      </div>
+      <div class="card" style="border-left:5px solid var(--vermelho);">
+        <div class="card-icon">📉</div>
+        <div class="card-titulo" style="color:var(--vermelho);">Recuos</div>
+        <ul style="list-style:none;">
+          <li>✗ Decréscimo de cereais</li>
+          <li>✗ Abandono rural</li>
+          <li>✗ Mais importações</li>
+          <li>✗ Défice comercial</li>
+        </ul>
+      </div>
+    </div>
+    
+    <div class="grafico-container">
+      <h3>👨‍🌾 Envelhecimento dos Agricultores Portugueses</h3>
+      <canvas id="grafico-envelhecimento"></canvas>
+    </div>
+    
+    <div class="quiz-container">
+      <div class="quiz-pergunta">🤔 Nas primeiras décadas, Portugal enfrentou:</div>
+      <div class="quiz-opcoes">
+        <div class="quiz-opcao" onclick="verificarQuiz(this,true,'q5','portugal')">A) Limitações à produção em bens deficitários</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q5','portugal')">B) Aumento dos preços pagos</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q5','portugal')">C) Aumento das exportações</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q5','portugal')">D) Ajudas aos pequenos produtores</div>
+      </div>
+      <div id="q5-feedback" class="quiz-feedback"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CENA 6 - PAC 2023 -->
+<section id="cena6" class="cena">
+  <div class="cena-container">
+    <div class="cena-header">
+      <h2 class="cena-titulo" style="margin:0;">🎯 PAC 2023-2027</h2>
+      <button class="btn-audio" onclick="narrar(this,'txt6')">🔊</button>
+    </div>
+    <div id="txt6" class="cena-texto">Seis medidas revolucionárias. Clica nos cartões para virar! 👇</div>
+    
+    <div class="cards-grid">
+      <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-card-inner"><div class="flip-card-front"><div class="card-icon">🇵🇹</div><h3>Autonomia Nacional</h3></div><div class="flip-card-back"><p><strong>Plano Estratégico Nacional</strong></p><p>Ajuste às especificidades portuguesas</p></div></div></div>
+      <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-card-inner"><div class="flip-card-front"><div class="card-icon">⚖️</div><h3>Apoios Justos</h3></div><div class="flip-card-back"><p><strong>Prioridade a pequenos e jovens</strong></p><p>Fixação no interior</p></div></div></div>
+      <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-card-inner"><div class="flip-card-front"><div class="card-icon">📊</div><h3>Desempenho</h3></div><div class="flip-card-back"><p><strong>Avaliação anual</strong></p><p>Práticas sustentáveis</p></div></div></div>
+      <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-card-inner"><div class="flip-card-front"><div class="card-icon">🌿</div><h3>Eco-Regimes</h3></div><div class="flip-card-back"><p><strong>Pagamentos ecológicos</strong></p><p>Clima, ambiente, bem-estar animal</p></div></div></div>
+      <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-card-inner"><div class="flip-card-front"><div class="card-icon">👷</div><h3>Condicionalidade</h3></div><div class="flip-card-back"><p><strong>Direito laboral</strong></p><p>Melhores condições</p></div></div></div>
+      <div class="flip-card" onclick="this.classList.toggle('flipped')"><div class="flip-card-inner"><div class="flip-card-front"><div class="card-icon">🏛️</div><h3>Arquitetura Verde</h3></div><div class="flip-card-back"><p><strong>25% para clima</strong></p><p>Modernização sustentável</p></div></div></div>
+    </div>
+    
+    <div class="quiz-container">
+      <div class="quiz-pergunta">🤔 A principal medida para práticas sustentáveis é:</div>
+      <div class="quiz-opcoes">
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q6','sustentabilidade')">A) Modo integrado isento de químicos</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,true,'q6','sustentabilidade')">B) Pagamentos ecológicos (eco-regimes)</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q6','sustentabilidade')">C) Prioridade às grandes explorações</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q6','sustentabilidade')">D) Subsídios para fitofármacos</div>
+      </div>
+      <div id="q6-feedback" class="quiz-feedback"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CENA 7 - ESTRATÉGIAS -->
+<section id="cena7" class="cena">
+  <div class="cena-container">
+    <h2 class="cena-titulo">🧩 5 Estratégias para Portugal</h2>
+    <div class="cena-texto" id="txt7">Explora os mercados de circuitos curtos no mapa e descobre as 5 estratégias prioritárias.</div>
+    
+    <div class="cards-grid">
+      <div class="card"><div class="card-icon">🏭</div><div class="card-titulo">1. Modernizar</div><p>Agricultura 4.0, digitalização</p></div>
+      <div class="card"><div class="card-icon">🛒</div><div class="card-titulo">2. Distribuição</div><p>Circuitos curtos, mercados locais</p></div>
+      <div class="card"><div class="card-icon">🌱</div><div class="card-titulo">3. Ecológicas</div><p>Biológico, rotação</p></div>
+      <div class="card"><div class="card-icon">🎓</div><div class="card-titulo">4. Recursos Humanos</div><p>Formação, jovens</p></div>
+      <div class="card"><div class="card-icon">🤝</div><div class="card-titulo">5. Associativismo</div><p>Cooperativas, escala</p></div>
+    </div>
+    
+    <div class="grafico-container">
+      <h3>🛒 Circuitos Curtos — Mercados de Produtores (clica para detalhes)</h3>
+      <div id="mapa-circuitos" class="mapa-container"></div>
+    </div>
+    
+    <div class="grafico-container">
+      <h3>💧 Grandes Aproveitamentos de Regadio</h3>
+      <div id="mapa-regadio" class="mapa-container"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CENA 8 - LUSOMORANGO -->
+<section id="cena8" class="cena">
+  <div class="cena-container">
+    <div class="cena-header">
+      <h2 class="cena-titulo" style="margin:0;">🍓 Lusomorango</h2>
+      <button class="btn-audio" onclick="narrar(this,'txt8')">🔊</button>
+    </div>
+    <div id="txt8" class="cena-texto">A maior Organização de Produtores nacional em volume de negócios. A fileira dos pequenos frutos vale mais de 230 M€ em exportações, com a framboesa a representar mais de 80%.</div>
+    
+    <div class="cards-grid">
+      <div class="card" style="text-align:center;"><div style="font-size:2.5em; font-weight:900; color:var(--dourado);" class="contador" data-target="230">0</div><div>Milhões € exportações</div></div>
+      <div class="card" style="text-align:center;"><div style="font-size:2.5em; font-weight:900; color:var(--dourado);" class="contador" data-target="80">0</div><div>% em framboesa</div></div>
+      <div class="card" style="text-align:center;"><div style="font-size:2.5em; font-weight:900; color:var(--dourado);" class="contador" data-target="40">0</div><div>Acionistas</div></div>
+    </div>
+    
+    <div class="grafico-container">
+      <h3>🌍 Fluxos de Exportação — origem: Odemira (linhas animadas)</h3>
+      <div id="mapa-export" class="mapa-container"></div>
+    </div>
+    
+    <div class="grafico-container">
+      <h3>📊 Destinos das Exportações (%)</h3>
+      <canvas id="grafico-export"></canvas>
+    </div>
+    
+    <div class="quiz-container">
+      <div class="quiz-pergunta">🤔 As vantagens do associativismo na Lusomorango:</div>
+      <div class="quiz-opcoes">
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q8','portugal')">A) Isolamento dos produtores</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,true,'q8','portugal')">B) Economias de escala e capacidade negocial</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q8','portugal')">C) Redução da qualidade</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q8','portugal')">D) Só mercado nacional</div>
+      </div>
+      <div id="q8-feedback" class="quiz-feedback"></div>
+    </div>
+  </div>
+</section>
+
+<!-- CENA 9 - BIOLÓGICO -->
+<section id="cena9" class="cena">
+  <div class="cena-container">
+    <div class="cena-header">
+      <h2 class="cena-titulo" style="margin:0;">🌿 O Boom do Biológico</h2>
+      <button class="btn-audio" onclick="narrar(this,'txt9')">🔊</button>
+    </div>
+    <div id="txt9" class="cena-texto">Entre 2009 e 2019, as explorações biológicas cresceram 214%. Mas a maioria da SAU biológica está ligada à produção animal.</div>
+    
+    <div class="grafico-container">
+      <h3>📈 Crescimento da Agricultura Biológica</h3>
+      <canvas id="grafico-bio"></canvas>
+    </div>
+    
+    <div class="grafico-container">
+      <h3>🗺️ Distribuição das Explorações Biológicas por Região</h3>
+      <div id="mapa-bio" class="mapa-container"></div>
+    </div>
+    
+    <div class="grafico-container">
+      <h3>🥧 Repartição da SAU Biológica (2019)</h3>
+      <canvas id="grafico-sau"></canvas>
+    </div>
+    
+    <div class="quiz-container">
+      <div class="quiz-pergunta">🤔 Entre 2009 e 2019, as explorações biológicas:</div>
+      <div class="quiz-opcoes">
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q9','biologico')">A) Duplicaram</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,true,'q9','biologico')">B) Triplicaram (+214%)</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q9','biologico')">C) Mantiveram-se</div>
+        <div class="quiz-opcao" onclick="verificarQuiz(this,false,'q9','biologico')">D) Diminuíram</div>
+      </div>
+      <div id="q9-feedback" class="quiz-feedback"></div>
+    </div>
+  </div>
+</section>
+
+<!-- JOGO -->
+<section id="jogo" class="cena">
+  <div class="cena-container">
+    <h2 class="cena-titulo">🎮 Simulador do Agricultor</h2>
+    <div class="cena-texto">Toma 5 decisões e vê o impacto em 💰 Economia, 🌿 Ambiente e 👥 Social.</div>
+    
+    <div class="jogo-painel">
+      <div class="indicador"><div>💰</div><div class="indicador-valor" id="val-eco">50</div><div>Economia</div></div>
+      <div class="indicador"><div>🌿</div><div class="indicador-valor" id="val-amb">50</div><div>Ambiente</div></div>
+      <div class="indicador"><div>👥</div><div class="indicador-valor" id="val-soc">50</div><div>Social</div></div>
+    </div>
+    
+    <div id="jogo-cena" style="background:white; padding:20px; border-radius:12px; box-shadow:0 3px 10px rgba(0,0,0,0.1);"></div>
+  </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="cena">
+  <div class="cena-container">
+    <h2 class="cena-titulo">📊 Dashboard da Turma</h2>
+    
+    <div class="medalha" id="medalha-container">
+      <div class="medalha-icon" id="medalha-icon">🎖️</div>
+      <div class="medalha-titulo" id="medalha-titulo">Ainda sem medalha</div>
+      <p id="medalha-desc" style="margin-top:10px; opacity:0.9;">Responde aos quizzes para ganhar a tua medalha!</p>
+    </div>
+    
+    <div class="progresso-aluno">
+      <h3 style="color:var(--azul);">👤 O teu progresso</h3>
+      <label><strong>O teu nome:</strong></label>
+      <input type="text" id="nome-aluno" class="input-nome" placeholder="Ex: João Silva" oninput="guardarNome()">
+      
+      <div style="margin-top:10px;"><strong>Cenas visitadas:</strong><div class="barra-progresso"><div class="barra-preenchimento" id="barra-cenas" style="width:0%;">0%</div></div></div>
+      <div><strong>Quizzes respondidos:</strong><div class="barra-progresso"><div class="barra-preenchimento" id="barra-quiz" style="width:0%;">0%</div></div></div>
+      <div><strong>Taxa de acerto:</strong><div class="barra-progresso"><div class="barra-preenchimento" id="barra-acerto" style="width:0%;">0%</div></div></div>
+    </div>
+    
+    <div class="grafico-container" style="background:rgba(255,255,255,0.95);">
+      <h3>📡 Radar de Competências</h3>
+      <canvas id="grafico-radar"></canvas>
+    </div>
+    
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-valor" id="stat-alunos">0</div><div>👥 Alunos</div></div>
+      <div class="stat-card"><div class="stat-valor" id="stat-quizzes">0</div><div>✅ Quizzes</div></div>
+      <div class="stat-card"><div class="stat-valor" id="stat-acerto">0%</div><div>🎯 Acertos</div></div>
+      <div class="stat-card"><div class="stat-valor" id="stat-jogo">0</div><div>🎮 Melhor jogo</div></div>
+    </div>
+    
+    <div style="text-align:center; margin-top:20px;">
+      <button class="btn-limpar" onclick="limparDados()">🗑️ Limpar os meus dados</button>
+    </div>
+  </div>
+</section>
+
+<footer style="background:var(--cinza); color:white; text-align:center; padding:30px 15px;">
+  <p>🌾 A Agricultura Portuguesa e a PAC</p>
+  <p style="font-size:0.85em; opacity:0.8; margin-top:10px;">Geografia A — 11.º Ano | Tema 3 — Os espaços organizados pela população</p>
+  <button class="btn-acao" onclick="window.scrollTo({top:0,behavior:'smooth'})">🔄 Voltar ao início</button>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+/* ===== ESTADO ===== */
+const estado = {
+  aluno: { nome:'', cenasVisitadas:new Set(), quizzes:0, certos:0, jogo:0,
+           competencias:{historia:0, impactos:0, portugal:0, sustentabilidade:0, biologico:0},
+           competenciasTotal:{historia:0, impactos:0, portugal:0, sustentabilidade:0, biologico:0} },
+  turma: JSON.parse(localStorage.getItem('turma_pac_v2') || '{"alunos":{},"totalQuizzes":0,"totalCertos":0,"melhorJogo":0}')
+};
+
+/* ===== MENU ===== */
+function toggleMenu() {
+  document.getElementById('menu').classList.toggle('aberto');
+  document.getElementById('overlay').classList.toggle('ativo');
+}
+
+/* ===== NARRAÇÃO ===== */
+let botaoAudio = null;
+function narrar(botao, id) {
+  if (!('speechSynthesis' in window)) { alert('Browser sem suporte a narração.'); return; }
+  if (botaoAudio === botao && speechSynthesis.speaking) {
+    speechSynthesis.cancel();
+    botao.classList.remove('ativo');
+    botao.textContent = '🔊';
+    botaoAudio = null;
+    return;
+  }
+  speechSynthesis.cancel();
+  if (botaoAudio) { botaoAudio.classList.remove('ativo'); botaoAudio.textContent='🔊'; }
+  const u = new SpeechSynthesisUtterance(document.getElementById(id).innerText);
+  u.lang = 'pt-PT'; u.rate = 0.95;
+  const vozPT = speechSynthesis.getVoices().find(v=>v.lang.startsWith('pt'));
+  if (vozPT) u.voice = vozPT;
+  u.onstart = () => { botao.classList.add('ativo'); botao.textContent='⏸️'; botaoAudio=botao; };
+  u.onend = () => { botao.classList.remove('ativo'); botao.textContent='🔊'; botaoAudio=null; };
+  speechSynthesis.speak(u);
+}
+
+/* ===== PROGRESSO GLOBAL + OBSERVER ===== */
+const cenasTotal = 9;
+let cenasConcluidas = new Set();
+
+function atualizarProgressoGlobal() {
+  const pct = Math.round((cenasConcluidas.size / cenasTotal) * 100);
+  document.getElementById('barra-global').style.width = pct + '%';
+}
+
+function mostrarToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('visivel');
+  setTimeout(() => t.classList.remove('visivel'), 2500);
+}
+
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting && e.target.id) {
+      const id = e.target.id;
+      if (id.startsWith('cena') && id !== 'cena1' && !cenasConcluidas.has(id)) {
+        cenasConcluidas.add(id);
+        estado.aluno.cenasVisitadas.add(id);
+        atualizarProgressoGlobal();
+        mostrarToast(`✅ Cena ${cenasConcluidas.size} de ${cenasTotal} concluída!`);
+        atualizarDashboard();
+        // Inicializar mapas quando visíveis
+        inicializarMapasDiferidos();
+      }
+    }
+  });
+}, { threshold: 0.55 });
+
+document.querySelectorAll('.cena').forEach(c => observer.observe(c));
+
+/* ===== MAPAS (dados) ===== */
+const dadosRegioes = [
+  { nome:'Norte', lat:41.5, lng:-8.2, cor:'#6B8E23',
+    produto:'Vinho Verde, milho, pecuária', img:'https://picsum.photos/seed/norte/400/200',
+    desafio:'Minifúndio e envelhecimento dos agricultores', pac:'Apoios à agricultura familiar e jovens',
+    tooltip:'Norte → Minifúndio, vinho verde, pecuária' },
+  { nome:'Centro', lat:40.2, lng:-8.0, cor:'#DAA520',
+    produto:'Floresta, hortícolas, vinho Dão', img:'https://picsum.photos/seed/centro/400/200',
+    desafio:'Incêndios e abandono das terras', pac:'Medidas agroambientais e florestais',
+    tooltip:'Centro → Floresta, hortícolas, vinho' },
+  { nome:'Alentejo', lat:38.5, lng:-7.5, cor:'#003399',
+    produto:'Cereais, olival intensivo, montado', img:'https://picsum.photos/seed/alentejo/400/200',
+    desafio:'Escassez de água (31% da SAU nacional)', pac:'Eco-regimes e gestão eficiente da água',
+    tooltip:'Alentejo → Cereais, olival, montado' },
+  { nome:'Algarve', lat:37.1, lng:-8.0, cor:'#9B59B6',
+    produto:'Citrinos, horticultura de exportação', img:'https://picsum.photos/seed/algarve/400/200',
+    desafio:'Pressão turística sobre solos agrícolas', pac:'Diversificação e circuitos curtos',
+    tooltip:'Algarve → Citrinos, horticultura de exportação' },
+  { nome:'Açores', lat:38.7, lng:-27.2, cor:'#1ABC9C',
+    produto:'Pecuária leiteira, pastagens', img:'https://picsum.photos/seed/acores/400/200',
+    desafio:'Isolamento e custos de transporte', pac:'POSEI (regiões ultraperiféricas)',
+    tooltip:'Açores → Pecuária leiteira' },
+  { nome:'Madeira', lat:32.7, lng:-16.9, cor:'#E67E22',
+    produto:'Banana, vinho Madeira', img:'https://picsum.photos/seed/madeira/400/200',
+    desafio:'Socalcos e pequena dimensão', pac:'POSEI e apoio à banana',
+    tooltip:'Madeira → Banana, vinho' }
+];
+
+const mercadosCircuitos = [
+  { nome:'Mercado de Amarante', cidade:'Amarante', lat:41.27, lng:-8.08, produtos:'Vinho verde, fumados, doçaria', dist:'< 30 km', vantagem:'Menos transporte, produtos frescos' },
+  { nome:'Mercado do Marco de Canaveses', cidade:'Marco de Canaveses', lat:41.19, lng:-8.15, produtos:'Hortícolas, fruta, artesanato', dist:'< 20 km', vantagem:'Apoio à economia local' },
+  { nome:'BioMercado de Braga', cidade:'Braga', lat:41.55, lng:-8.42, produtos:'Biológicos certificados', dist:'Urbano', vantagem:'Redução da pegada ecológica' },
+  { nome:'Mercado D. Pedro V', cidade:'Coimbra', lat:40.21, lng:-8.42, produtos:'Hortícolas, queijo, fruta', dist:'< 50 km', vantagem:'Preserva variedades locais' },
+  { nome:'Feira da Terra', cidade:'Évora', lat:38.57, lng:-7.91, produtos:'Biológico, azeite, pão', dist:'< 40 km', vantagem:'Circuito curto, menos embalagem' }
+];
+
+const regadios = [
+  { nome:'Alqueva', lat:38.2, lng:-7.3, area:'120 000 ha', desc:'Maior lago artificial da Europa. Revolucionou o Alentejo.' },
+  { nome:'Ribatejo', lat:39.2, lng:-8.7, area:'60 000 ha', desc:'Vale do Tejo — hortícolas e tomate para indústria.' },
+  { nome:'Oeste', lat:39.1, lng:-9.2, area:'30 000 ha', desc:'Hortícolas e fruta de alta produtividade.' },
+  { nome:'Mondego', lat:40.2, lng:-8.6, area:'12 000 ha', desc:'Arroz e milho — aproveitamento histórico.' }
+];
+
+const bioRegioes = [
+  { nome:'Alentejo', lat:38.5, lng:-7.5, valor:40, cor:'#6B8E23' },
+  { nome:'Trás-os-Montes', lat:41.5, lng:-7.0, valor:20, cor:'#DAA520' },
+  { nome:'Centro', lat:40.2, lng:-8.0, valor:15, cor:'#003399' },
+  { nome:'Algarve', lat:37.1, lng:-8.0, valor:10, cor:'#9B59B6' },
+  { nome:'Outras', lat:39.5, lng:-8.5, valor:15, cor:'#95A5A6' }
+];
+
+const exportacoes = [
+  { nome:'Alemanha', lat:52.52, lng:13.40, valor:12, cor:'#DAA520', desc:'Destino estratégico da framboesa portuguesa.' },
+  { nome:'França', lat:48.86, lng:2.35, valor:18, cor:'#003399', desc:'Segundo maior mercado para pequenos frutos.' },
+  { nome:'Espanha', lat:40.42, lng:-3.70, valor:28, cor:'#C84B31', desc:'Principal destino — porta de entrada e consumo direto.' },
+  { nome:'Reino Unido', lat:51.51, lng:-0.13, valor:9, cor:'#6B8E23', desc:'Mercado premium fora da UE.' },
+  { nome:'Países Baixos', lat:52.37, lng:4.90, valor:7, cor:'#9B59B6', desc:'Hub de distribuição para o norte da Europa.' }
+];
+
+/* ===== INICIALIZAR MAPAS ===== */
+let mapasInicializados = {};
+
+function inicializarMapasDiferidos() {
+  setTimeout(() => {
+    if (!mapasInicializados['nuts'] && document.getElementById('mapa-nuts')) { criarMapaNUTS(); mapasInicializados['nuts']=true; }
+    if (!mapasInicializados['abandono'] && document.getElementById('mapa-abandono')) { criarMapaAbandono(); mapasInicializados['abandono']=true; }
+    if (!mapasInicializados['circuitos'] && document.getElementById('mapa-circuitos')) { criarMapaCircuitos(); mapasInicializados['circuitos']=true; }
+    if (!mapasInicializados['regadio'] && document.getElementById('mapa-regadio')) { criarMapaRegadio(); mapasInicializados['regadio']=true; }
+    if (!mapasInicializados['export'] && document.getElementById('mapa-export')) { criarMapaExport(); mapasInicializados['export']=true; }
+    if (!mapasInicializados['bio'] && document.getElementById('mapa-bio')) { criarMapaBio(); mapasInicializados['bio']=true; }
+  }, 300);
+}
+
+function popupHTML(dados) {
+  return `<div class="popup-rico">
+    <img src="${dados.img}" alt="${dados.nome}">
+    <h4>${dados.nome}</h4>
+    <div><span class="tag">🌾 ${dados.produto}</span></div>
+    <div class="desafio">⚠️ Desafio: ${dados.desafio}</div>
+    <div class="pac">🇪🇺 PAC: ${dados.pac}</div>
+  </div>`;
+}
+
+function criarMapaNUTS() {
+  const m = L.map('mapa-nuts').setView([39.5, -8.0], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(m);
+  dadosRegioes.forEach(r => {
+    const marker = L.circleMarker([r.lat, r.lng], {
+      radius: 22, fillColor: r.cor, color: '#fff', weight: 2, fillOpacity: 0.85
+    }).addTo(m);
+    marker.bindTooltip(r.tooltip, { direction:'top', offset:[0,-10] });
+    marker.bindPopup(popupHTML(r), { maxWidth: 280 });
+  });
+  setTimeout(() => m.invalidateSize(), 100);
+}
+
+function criarMapaAbandono() {
+  const m = L.map('mapa-abandono').setView([39.5, -8.0], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(m);
+  
+  const abandonos = [
+    { nome:'Trás-os-Montes (interior)', lat:41.5, lng:-7.0, nivel:'Muito alto', cor:'#8B0000', raio:35 },
+    { nome:'Beira Interior', lat:40.3, lng:-7.3, nivel:'Alto', cor:'#C84B31', raio:30 },
+    { nome:'Alentejo interior', lat:38.3, lng:-7.5, nivel:'Alto', cor:'#C84B31', raio:30 },
+    { nome:'Serra da Estrela', lat:40.3, lng:-7.6, nivel:'Muito alto', cor:'#8B0000', raio:32 },
+    { nome:'Litoral Norte', lat:41.2, lng:-8.5, nivel:'Baixo', cor:'#27AE60', raio:20 },
+    { nome:'Litoral Centro', lat:40.2, lng:-8.6, nivel:'Moderado', cor:'#F1C40F', raio:22 }
+  ];
+  
+  abandonos.forEach(a => {
+    L.circle([a.lat, a.lng], { radius: a.raio*1000, color:a.cor, fillColor:a.cor, fillOpacity:0.4 })
+      .addTo(m)
+      .bindPopup(`<b>${a.nome}</b><br>Abandono rural: <b style="color:${a.cor};">${a.nivel}</b><br><small>Relação direta com desertificação e envelhecimento</small>`);
+  });
+  
+  const legenda = L.control({position:'bottomright'});
+  legenda.onAdd = () => {
+    const d = L.DomUtil.create('div');
+    d.innerHTML = `<div style="background:white;padding:10px;border-radius:8px;">
+      <b>Abandono:</b><br>
+      <span style="color:#8B0000;">●</span> Muito alto<br>
+      <span style="color:#C84B31;">●</span> Alto<br>
+      <span style="color:#F1C40F;">●</span> Moderado<br>
+      <span style="color:#27AE60;">●</span> Baixo</div>`;
+    return d;
+  };
+  legenda.addTo(m);
+  setTimeout(() => m.invalidateSize(), 100);
+}
+
+function criarMapaCircuitos() {
+  const m = L.map('mapa-circuitos').setView([39.5, -8.2], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(m);
+  
+  mercadosCircuitos.forEach(mc => {
+    const icone = L.divIcon({ html:'📍', className:'emoji-icon', iconSize:[30,30] });
+    L.marker([mc.lat, mc.lng], {icon:icone}).addTo(m)
+      .bindPopup(`<div class="popup-rico">
+        <h4>🛒 ${mc.nome}</h4>
+        <p><b>Produtos:</b> ${mc.produtos}</p>
+        <p><b>Distância ao consumidor:</b> ${mc.dist}</p>
+        <div class="pac">🌿 ${mc.vantagem}</div>
+      </div>`);
+  });
+  setTimeout(() => m.invalidateSize(), 100);
+}
+
+function criarMapaRegadio() {
+  const m = L.map('mapa-regadio').setView([39.3, -8.3], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(m);
+  
+  regadios.forEach(r => {
+    const icone = L.divIcon({ html:'💧', className:'emoji-icon', iconSize:[30,30] });
+    L.marker([r.lat, r.lng], {icon:icone}).addTo(m)
+      .bindPopup(`<div class="popup-rico">
+        <h4>💧 ${r.nome}</h4>
+        <p><b>Área regada:</b> ${r.area}</p>
+        <p>${r.desc}</p>
+        <div class="pac">🇪🇺 Modernização financiada pela PAC</div>
+      </div>`);
+  });
+  setTimeout(() => m.invalidateSize(), 100);
+}
+
+function criarMapaExport() {
+  const m = L.map('mapa-export').setView([46.0, 0.0], 4);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(m);
+  
+  const origem = [37.60, -8.63]; // Odemira
+  const iconeOrigem = L.divIcon({ html:'🍓', className:'emoji-icon', iconSize:[40,40] });
+  L.marker(origem, {icon:iconeOrigem}).addTo(m)
+    .bindPopup('<b>Odemira — Origem</b><br>Produção de pequenos frutos Lusomorango');
+  
+  exportacoes.forEach(d => {
+    const peso = Math.max(2, d.valor / 4); // espessura proporcional
+    const linha = L.polyline([origem, [d.lat, d.lng]], {
+      color: d.cor,
+      weight: peso,
+      opacity: 0.8,
+      className: 'linha-fluxo'
+    }).addTo(m);
+    linha.bindTooltip(`<b>${d.nome}</b><br>${d.valor}% das exportações<br><i>${d.desc}</i>`, { sticky:true });
+    
+    L.circleMarker([d.lat, d.lng], { radius:6, color:d.cor, fillColor:d.cor, fillOpacity:1 })
+      .addTo(m)
+      .bindTooltip(`<b>${d.nome}</b><br>${d.valor}% das exportações`, { direction:'top' });
+  });
+  setTimeout(() => m.invalidateSize(), 100);
+}
+
+function criarMapaBio() {
+  const m = L.map('mapa-bio').setView([39.5, -8.0], 6);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {attribution:'© OpenStreetMap'}).addTo(m);
+  
+  bioRegioes.forEach(b => {
+    L.circle([b.lat, b.lng], { radius: b.valor*1500, color:b.cor, fillColor:b.cor, fillOpacity:0.5 })
+      .addTo(m)
+      .bindPopup(`<b>${b.nome}</b><br>${b.valor}% das explorações biológicas`);
+  });
+  
+  L.control({position:'bottomright'}).onAdd = function() {
+    const d = L.DomUtil.create('div');
+    d.innerHTML = `<div style="background:white;padding:10px;border-radius:8px;">
+      <b>Pergunta:</b> Porque concentra o Alentejo grande parte da SAU biológica?<br>
+      <small>(pensa nas pastagens e produção animal)</small></div>`;
+    return d;
+  }.addTo(m);
+  
+  setTimeout(() => m.invalidateSize(), 100);
+}
+
+/* ===== TIMELINE FASES ===== */
+const fases = [
+  { titulo:'1962 — Da Escassez à Abundância 🌾', texto:'Lema: "Produzir Mais". Incentivos à modernização, preços garantidos, subsídios à produção. A Europa tornou-se autossuficiente — mas surgiram excedentes.' },
+  { titulo:'1992 — A Sustentabilidade 🌱', texto:'Lema: "Produzir Melhor". Reforma MacSharry: pagamentos desvinculados da produção, quotas, medidas agroambientais.' },
+  { titulo:'2023 — Produção Sustentável ♻️', texto:'Lema: "Produzir de Forma Justa e Sustentável". Eco-regimes, condicionalidade social, foco no desempenho e no Pacto Ecológico Europeu.' }
+];
+
+function mostrarFase(i) {
+  const p = document.getElementById('painel-fase');
+  document.getElementById('fase-titulo').textContent = fases[i].titulo;
+  document.getElementById('fase-texto').textContent = fases[i].texto;
+  p.classList.add('ativo');
+}
+
+/* ===== QUIZZES ===== */
+const feedbacks = {
+  q2: { c:'🎉 Correto! O biológico só foi preocupação décadas depois.', e:'❌ Em 1962 a prioridade era produzir muito.' },
+  q3: { c:'🎉 Exato! As famosas "montanhas de manteiga".', e:'❌ O paradoxo: produzir demais sem escoar.' },
+  q5: { c:'🎉 Correto! Portugal tinha limitações mesmo em bens deficitários.', e:'❌ A resposta certa é A.' },
+  q6: { c:'🎉 Perfeito! Os eco-regimes são a grande inovação.', e:'❌ A resposta certa é B — eco-regimes.' },
+  q8: { c:'🎉 Excelente! Associativismo = escala + poder negocial.', e:'❌ A resposta certa é B.' },
+  q9: { c:'🎉 Exato! +214%, cerca de 4000 explorações.', e:'❌ Foi +214% — mais do que triplicar.' }
+};
+
+function verificarQuiz(elem, correta, id, categoria) {
+  if (elem.parentElement.dataset.feito) return;
+  elem.parentElement.dataset.feito = 'true';
+  
+  const fb = document.getElementById(id + '-feedback');
+  elem.parentElement.querySelectorAll('.quiz-opcao').forEach(o => { o.style.pointerEvents='none'; o.style.opacity='0.6'; });
+  
+  estado.aluno.quizzes++;
+  estado.aluno.competenciasTotal[categoria]++;
+  estado.turma.totalQuizzes++;
+  
+  if (correta) {
+    elem.classList.add('correta');
+    elem.style.opacity = '1';
+    fb.className = 'quiz-feedback show correto';
+    fb.textContent = feedbacks[id].c;
+    estado.aluno.certos++;
+    estado.aluno.competencias[categoria]++;
+    estado.turma.totalCertos++;
+  } else {
+    elem.classList.add('incorreta');
+    elem.style.opacity = '1';
+    fb.className = 'quiz-feedback show incorreto';
+    fb.textContent = feedbacks[id].e;
+  }
+  
+  guardarTurma();
+  atualizarDashboard();
+}
+
+/* ===== DASHBOARD ===== */
+let graficoRadar = null;
+
+function guardarNome() {
+  estado.aluno.nome = document.getElementById('nome-aluno').value.trim();
+  guardarTurma();
+  atualizarDashboard();
+}
+
+function guardarTurma() {
+  if (estado.aluno.nome) {
+    estado.turma.alunos[estado.aluno.nome] = {
+      cenas: estado.aluno.cenasVisitadas.size,
+      quizzes: estado.aluno.quizzes,
+      certos: estado.aluno.certos,
+      jogo: estado.aluno.jogo,
+      comp: estado.aluno.competencias
+    };
+  }
+  localStorage.setItem('turma_pac_v2', JSON.stringify(estado.turma));
+}
+
+function atualizarDashboard() {
+  // Barras individuais
+  const pctCenas = Math.round((estado.aluno.cenasVisitadas.size / 8) * 100);
+  const pctQuiz = Math.round((estado.aluno.quizzes / 6) * 100);
+  const pctAcerto = estado.aluno.quizzes > 0 ? Math.round((estado.aluno.certos / estado.aluno.quizzes) * 100) : 0;
+  
+  setBarra('barra-cenas', pctCenas);
+  setBarra('barra-quiz', pctQuiz);
+  setBarra('barra-acerto', pctAcerto);
+  
+  // Medalhas
+  const mi = document.getElementById('medalha-icon');
+  const mt = document.getElementById('medalha-titulo');
+  const md = document.getElementById('medalha-desc');
+  
+  if (pctAcerto >= 80 && estado.aluno.quizzes >= 4) {
+    mi.textContent = '🥇'; mt.textContent = 'Mestre da Agricultura Sustentável';
+    md.textContent = 'Domínio excelente dos conteúdos da PAC!';
+  } else if (pctAcerto >= 60 && estado.aluno.quizzes >= 3) {
+    mi.textContent = '🥈'; mt.textContent = 'Especialista Rural';
+    md.textContent = 'Muito bom! Continua a explorar os conteúdos.';
+  } else if (estado.aluno.quizzes >= 2) {
+    mi.textContent = '🥉'; mt.textContent = 'Aprendiz PAC';
+    md.textContent = 'Bom começo! Responde a mais quizzes para subir de nível.';
+  } else {
+    mi.textContent = '🎖️'; mt.textContent = 'Ainda sem medalha';
+    md.textContent = 'Responde aos quizzes para ganhar a tua medalha!';
+  }
+  
+  // Estatísticas turma
+  document.getElementById('stat-alunos').textContent = Object.keys(estado.turma.alunos).length;
+  document.getElementById('stat-quizzes').textContent = estado.turma.totalQuizzes;
+  const mediaTurma = estado.turma.totalQuizzes > 0 ? Math.round((estado.turma.totalCertos / estado.turma.totalQuizzes) * 100) : 0;
+  document.getElementById('stat-acerto').textContent = mediaTurma + '%';
+  document.getElementById('stat-jogo').textContent = estado.turma.melhorJogo;
+  
+  // Radar
+  atualizarRadar();
+}
+
+function setBarra(id, pct) {
+  const b = document.getElementById(id);
+  if (b) { b.style.width = pct + '%'; b.textContent = pct + '%'; }
+}
+
+function atualizarRadar() {
+  const labels = ['História da PAC', 'Impactos', 'Portugal', 'Sustentabilidade', 'Biológico'];
+  const valores = [
+    estado.aluno.competencias.historia,
+    estado.aluno.competencias.impactos,
+    estado.aluno.competencias.portugal,
+    estado.aluno.competencias.sustentabilidade,
+    estado.aluno.competencias.biologico
+  ].map((v, i) => {
+    const tot = [estado.aluno.competenciasTotal.historia, estado.aluno.competenciasTotal.impactos,
+                 estado.aluno.competenciasTotal.portugal, estado.aluno.competenciasTotal.sustentabilidade,
+                 estado.aluno.competenciasTotal.biologico][i];
+    return tot > 0 ? Math.round((v / tot) * 100) : 0;
+  });
+  
+  if (!graficoRadar) {
+    graficoRadar = new Chart(document.getElementById('grafico-radar'), {
+      type: 'radar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'As tuas competências (%)',
+          data: valores,
+          backgroundColor: 'rgba(107, 142, 35, 0.3)',
+          borderColor: '#6B8E23',
+          pointBackgroundColor: '#DAA520'
+        }]
+      },
+      options: { scales: { r: { min:0, max:100 } }, plugins:{legend:{display:false}} }
+    });
+  } else {
+    graficoRadar.data.datasets[0].data = valores;
+    graficoRadar.update();
+  }
+}
+
+function limparDados() {
+  if (confirm('Apagar os teus dados?')) {
+    if (estado.aluno.nome) delete estado.turma.alunos[estado.aluno.nome];
+    estado.aluno = { nome:'', cenasVisitadas:new Set(), quizzes:0, certos:0, jogo:0,
+      competencias:{historia:0, impactos:0, portugal:0, sustentabilidade:0, biologico:0},
+      competenciasTotal:{historia:0, impactos:0, portugal:0, sustentabilidade:0, biologico:0} };
+    document.getElementById('nome-aluno').value = '';
+    guardarTurma();
+    atualizarDashboard();
+  }
+}
+
+/* ===== GRÁFICOS COM TOOLTIPS RICOS ===== */
+function initGraficos() {
+  // Orçamento PAC — tooltip contextual
+  new Chart(document.getElementById('grafico-orcamento'), {
+    type: 'line',
+    data: {
+      labels: ['1970', '1980', '1990', '2000', '2010', '2023'],
+      datasets: [{
+        label: '% do Orçamento UE',
+        data: [87, 72, 60, 50, 40, 31],
+        borderColor: '#6B8E23',
+        backgroundColor: 'rgba(107,142,35,0.2)',
+        tension: 0.4, fill: true,
+        pointRadius: 7, pointBackgroundColor: '#DAA520'
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display:false },
+        tooltip: {
+          callbacks: {
+            title: (items) => `Ano ${items[0].label}`,
+            label: (item) => `Peso da PAC: ${item.raw}%`,
+            afterLabel: (item) => {
+              const ctx = [
+                'Nas décadas iniciais a PAC absorvia quase todo o orçamento.',
+                'A PAC ainda dominava o orçamento europeu.',
+                'Reforma MacSharry começa a reduzir o peso.',
+                'Alargamento a Leste diversifica gastos.',
+                'Novas prioridades: clima, investigação, coesão.',
+                'Hoje, a PAC representa menos de 1/3 do orçamento.'
+              ];
+              return '💡 ' + ctx[item.dataIndex];
+            }
+          }
+        }
+      },
+      scales: { y: { beginAtZero:true, max:100, title:{display:true, text:'% do orçamento'} } }
+    }
+  });
+  
+  // Envelhecimento
+  new Chart(document.getElementById('grafico-envelhecimento'), {
+    type: 'bar',
+    data: {
+      labels: ['<35 anos', '35-44', '45-54', '55-64', '65+ anos'],
+      datasets: [{
+        label: '% Agricultores',
+        data: [3, 8, 17, 20, 52],
+        backgroundColor: ['#27AE60', '#2ECC71', '#F1C40F', '#E67E22', '#C0392B']
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display:false },
+        tooltip: {
+          callbacks: {
+            afterLabel: (item) => {
+              const notas = [
+                'Só 3% dos agricultores são jovens — a PAC quer inverter isto.',
+                'Geração intermédia em declínio.',
+                'Faixa ativa mas envelhecida.',
+                'Muitos perto da reforma sem sucessão.',
+                'Mais de metade tem 65+ — desafio enorme!'
+              ];
+              return '💡 ' + notas[item.dataIndex];
+            }
+          }
+        }
+      },
+      scales: { y: { beginAtZero:true, title:{display:true, text:'%'} } }
+    }
+  });
+  
+  // Exportações
+  new Chart(document.getElementById('grafico-export'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Espanha', 'França', 'Alemanha', 'Reino Unido', 'Países Baixos', 'Outros'],
+      datasets: [{ data:[28,18,12,9,7,26], backgroundColor:['#C84B31','#003399','#DAA520','#6B8E23','#9B59B6','#95A5A6'] }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position:'bottom' },
+        tooltip: {
+          callbacks: {
+            afterLabel: (item) => {
+              const desc = exportacoes.find(e => e.nome === item.label);
+              return desc ? '💡 ' + desc.desc : '';
+            }
+          }
+        }
+      }
+    }
+  });
+  
+  // Biológico
+  new Chart(document.getElementById('grafico-bio'), {
+    type: 'bar',
+    data: {
+      labels: ['2009', '2019'],
+      datasets: [{ label:'Explorações certificadas', data:[1270, 4000], backgroundColor:['#DAA520','#6B8E23'] }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display:false },
+        tooltip: {
+          callbacks: {
+            afterLabel: (item) => {
+              if (item.dataIndex === 1) return '💡 Crescimento acumulado: +214% em 10 anos!';
+              return '💡 Ano base do recenseamento.';
+            }
+          }
+        }
+      },
+      scales: { y: { beginAtZero:true } }
+    }
+  });
+  
+  // SAU biológica
+  new Chart(document.getElementById('grafico-sau'), {
+    type: 'pie',
+    data: {
+      labels: ['Produção animal/pastagens', 'Hortícolas', 'Frutos', 'Cereais', 'Outros'],
+      datasets: [{ data:[60,15,10,10,5], backgroundColor:['#6B8E23','#DAA520','#003399','#C84B31','#999'] }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position:'bottom' },
+        tooltip: {
+          callbacks: {
+            afterLabel: (item) => item.dataIndex === 0
+              ? '💡 A maioria da SAU biológica está ligada à produção animal.'
+              : ''
+          }
+        }
+      }
+    }
+  });
+}
+
+/* ===== JOGO ===== */
+const jogo = { eco:50, amb:50, soc:50, cena:0 };
+
+const cenariosJogo = [
+  { t:'🚜 Decisão 1: O vizinho reforma-se', d:'Tens 5 ha no Alentejo. O vizinho oferece-te 20 ha. O que fazes?',
+    opcoes:[
+      { txt:'🅰️ Compro e junto as terras', ef:{e:15,a:-5,s:10}, tipo:'positivo', exp:'✅ Boa! Economias de escala.' },
+      { txt:'🅱️ Recuso — sem capital', ef:{e:0,a:0,s:-5}, tipo:'neutro', exp:'⚠️ O minifúndio limita-te. A PAC tem apoios!' },
+      { txt:'🅲 Proponho cooperativa', ef:{e:20,a:10,s:20}, tipo:'positivo', exp:'🎉 Excelente! Estratégia #5 da PAC.' }
+    ]},
+  { t:'🌱 Decisão 2: Modo de produção', d:'A PAC oferece eco-regimes. Que caminho segues?',
+    opcoes:[
+      { txt:'🅰️ Convencional', ef:{e:10,a:-20,s:0}, tipo:'negativo', exp:'❌ Curto prazo sim, longo prazo não.' },
+      { txt:'🅱️ Biológico', ef:{e:5,a:25,s:15}, tipo:'positivo', exp:'🎉 Ótima! +214% em 10 anos.' },
+      { txt:'🅲 Integrado', ef:{e:10,a:15,s:10}, tipo:'positivo', exp:'✅ Bom equilíbrio.' }
+    ]},
+  { t:'👨‍🌾 Decisão 3: O teu filho agrónomo', d:'Quer trabalhar na exploração. Como reages?',
+    opcoes:[
+      { txt:'🅰️ Desencorajo', ef:{e:-10,a:-10,s:-20}, tipo:'negativo', exp:'❌ Contribuis para o abandono rural.' },
+      { txt:'🅱️ Apoio + subsídios jovens', ef:{e:20,a:10,s:25}, tipo:'positivo', exp:'🎉 Perfeito! A PAC prioriza jovens.' },
+      { txt:'🅲 Deixo decidir sozinho', ef:{e:0,a:0,s:-5}, tipo:'neutro', exp:'⚠️ Perdes apoios.' }
+    ]},
+  { t:'🛒 Decisão 4: Vender o azeite', d:'Produzes azeite biológico. Como comercializas?',
+    opcoes:[
+      { txt:'🅰️ Grande superfície', ef:{e:10,a:0,s:-10}, tipo:'neutro', exp:'⚠️ Pressão sobre preços.' },
+      { txt:'🅱️ Circuitos curtos', ef:{e:15,a:15,s:20}, tipo:'positivo', exp:'🎉 Pagamento justo, menos pegada.' },
+      { txt:'🅲 Exportar via cooperativa', ef:{e:25,a:5,s:15}, tipo:'positivo', exp:'✅ Modelo Lusomorango.' }
+    ]},
+  { t:'🤖 Decisão 5: Agricultura 4.0', d:'Tens financiamento para modernização.',
+    opcoes:[
+      { txt:'🅰️ Trator novo', ef:{e:10,a:-5,s:0}, tipo:'neutro', exp:'⚠️ Modernizas, mas não é 4.0.' },
+      { txt:'🅱️ Sensores + drones + rega inteligente', ef:{e:20,a:25,s:10}, tipo:'positivo', exp:'🎉 Perfeito! -30% de água.' },
+      { txt:'🅲 Não invisto', ef:{e:-15,a:-10,s:-10}, tipo:'negativo', exp:'❌ Perdes competitividade.' }
+    ]}
+];
+
+function renderJogo() {
+  const c = cenariosJogo[jogo.cena];
+  let h = `<h3 style="color:var(--azul);">${c.t}</h3><p style="margin:10px 0; padding:12px; background:var(--bege); border-radius:8px;">${c.d}</p>`;
+  c.opcoes.forEach((o,i) => h += `<button class="jogo-opcao" onclick="escolherJogo(${i})">${o.txt}</button>`);
+  h += `<div id="jogo-fb"></div>`;
+  document.getElementById('jogo-cena').innerHTML = h;
+}
+
+function escolherJogo(i) {
+  const o = cenariosJogo[jogo.cena].opcoes[i];
+  jogo.eco = Math.max(0, Math.min(100, jogo.eco + o.ef.e));
+  jogo.amb = Math.max(0, Math.min(100, jogo.amb + o.ef.a));
+  jogo.soc = Math.max(0, Math.min(100, jogo.soc + o.ef.s));
+  
+  document.getElementById('val-eco').textContent = jogo.eco;
+  document.getElementById('val-amb').textContent = jogo.amb;
+  document.getElementById('val-soc').textContent = jogo.soc;
+  
+  document.querySelectorAll('.jogo-opcao').forEach(b => { b.disabled = true; b.style.opacity='0.5'; });
+  
+  const fb = document.getElementById('jogo-fb');
+  fb.className = `jogo-feedback show ${o.tipo}`;
+  fb.innerHTML = `<p>${o.exp}</p><p style="margin-top:8px; font-size:0.9em;">💰 ${o.ef.e>0?'+':''}${o.ef.e} | 🌿 ${o.ef.a>0?'+':''}${o.ef.a} | 👥 ${o.ef.s>0?'+':''}${o.ef.s}</p>
+    <button class="btn-acao" onclick="proxJogo()">${jogo.cena < 4 ? 'Próxima →' : 'Ver Resultado 🏆'}</button>`;
+}
+
+function proxJogo() {
+  jogo.cena++;
+  if (jogo.cena < 5) renderJogo();
+  else fimJogo();
+}
+
+function fimJogo() {
+  const media = Math.round((jogo.eco + jogo.amb + jogo.soc) / 3);
+  estado.aluno.jogo = media;
+  if (media > estado.turma.melhorJogo) estado.turma.melhorJogo = media;
+  
+  let cl, em;
+  if (media >= 80) { cl='Agricultor Visionário'; em='🏆🌟'; }
+  else if (media >= 60) { cl='Agricultor Consciente'; em='🥈🌱'; }
+  else if (media >= 40) { cl='Agricultor Tradicional'; em='🥉🚜'; }
+  else { cl='Agricultor em Risco'; em='⚠️📉'; }
+  
+  document.getElementById('jogo-cena').innerHTML = `
+    <div style="text-align:center;">
+      <div style="font-size:3em;">${em}</div>
+      <h3 style="color:var(--verde);">${cl}</h3>
+      <p style="font-size:1.3em; font-weight:700; color:var(--dourado); margin:10px 0;">Pontuação: ${media}/100</p>
+      <button class="btn-acao" onclick="reiniciarJogo()">🔄 Jogar Novamente</button>
+    </div>`;
+  
+  guardarTurma();
+  atualizarDashboard();
+}
+
+function reiniciarJogo() {
+  jogo.eco = 50; jogo.amb = 50; jogo.soc = 50; jogo.cena = 0;
+  document.getElementById('val-eco').textContent = 50;
+  document.getElementById('val-amb').textContent = 50;
+  document.getElementById('val-soc').textContent = 50;
+  renderJogo();
+}
+
+/* ===== CONTADORES ===== */
+function animarContadores() {
+  document.querySelectorAll('.contador').forEach(el => {
+    const target = parseInt(el.dataset.target);
+    let atual = 0;
+    const inc = target / 120;
+    const t = setInterval(() => {
+      atual += inc;
+      if (atual >= target) { el.textContent = target; clearInterval(t); }
+      else el.textContent = Math.floor(atual);
+    }, 16);
+  });
+}
+
+/* ===== INIT ===== */
+document.addEventListener('DOMContentLoaded', () => {
+  initGraficos();
+  renderJogo();
+  atualizarDashboard();
+  inicializarMapasDiferidos();
+  setTimeout(animarContadores, 500);
+  setTimeout(() => {
+    Object.values(mapasInicializados);
+  }, 1000);
+});
+</script>
+
+</body>
+</html>
