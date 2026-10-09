@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Atividades Interativas - PAC Portugal</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --azul-ue: #1565C0;
+            --verde-agri: #2E7D32;
+            --amarelo: #F9A825;
+            --laranja: #d35400;
+            --roxo: #8e44ad;
+            --fundo: #f0f2f5;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background: var(--fundo);
+            color: #333;
+        }
+
+        /* ===== CABEÇALHO ===== */
+        header {
+            background: linear-gradient(135deg, #1a237e, #0d47a1);
+            color: white;
+            text-align: center;
+            padding: 30px 20px;
+        }
+        header h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        header p { opacity: 0.85; }
+
+        /* ===== NAVEGAÇÃO POR SEPARADORES ===== */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        .tab-btn {
+            border: none;
+            padding: 12px 22px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.95rem;
+            background: #e8eaf6;
+            color: #333;
+            transition: all 0.3s;
+        }
+        .tab-btn:hover { transform: translateY(-2px); }
+        .tab-btn.active { background: var(--azul-ue); color: white; }
+
+        /* ===== SECÇÕES ===== */
+        .seccao {
+            display: none;
+            max-width: 900px;
+            margin: 30px auto;
+            padding: 0 20px;
+            animation: aparecer 0.5s ease;
+        }
+        .seccao.ativa { display: block; }
+        @keyframes aparecer {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .cartao {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+        }
+
+        h2 { color: var(--azul-ue); margin-bottom: 15px; }
+        .descricao { color: #666; margin-bottom: 25px; line-height: 1.6; }
+
+        /* ===== ATIVIDADE 1: SIMULADOR ===== */
+        .slider-grupo { margin-bottom: 22px; }
+        .slider-grupo label {
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .valor-slider { color: var(--verde-agri); font-weight: bold; }
+        input[type="range"] {
+            width: 100%;
+            accent-color: var(--azul-ue);
+            height: 8px;
+            cursor: pointer;
+        }
+
+        .total-box {
+            background: #e8f5e9;
+            border: 2px dashed var(--verde-agri);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin: 25px 0;
+        }
+        .total-box.excesso { background: #ffebee; border-color: #c62828; }
+        .total-valor { font-size: 2rem; font-weight: bold; color: var(--verde-agri); }
+        .total-box.excesso .total-valor { color: #c62828; }
+
+        .barra-progresso {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+        .barra-preenchimento {
+            height: 100%;
+            background: linear-gradient(90deg, var(--verde-agri), #66bb6a);
+            width: 0%;
+            transition: width 0.4s, background 0.4s;
+        }
+
+        .btn-principal {
+            display: block;
+            width: 100%;
+            padding: 16px;
+            background: var(--azul-ue);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-principal:hover { background: #0d47a1; transform: translateY(-2px); }
+
+        .feedback-box {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            display: none;
+            line-height: 1.8;
+        }
+        .feedback-box.sucesso { background: #e8f5e9; border-left: 5px solid var(--verde-agri); display: block; }
+        .feedback-box.aviso { background: #fff8e1; border-left: 5px solid var(--amarelo); display: block; }
+        .feedback-box.erro { background: #ffebee; border-left: 5px solid #c62828; display: block; }
+
+        /* ===== ATIVIDADE 2: QUIZ ===== */
+        .quiz-progresso {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #666;
+        }
+        .pergunta { font-size: 1.3rem; margin-bottom: 20px; font-weight: 600; }
+        .opcao {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            background: #f5f5f5;
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+        .opcao:hover:not(:disabled) { border-color: var(--azul-ue); background: #e3f2fd; }
+        .opcao.correta { background: #c8e6c9; border-color: var(--verde-agri); font-weight: bold; }
+        .opcao.errada { background: #ffcdd2; border-color: #c62828; }
+        .opcao:disabled { cursor: not-allowed; }
+
+        .quiz-feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+            font-weight: 600;
+        }
+
+        .resultado-final { text-align: center; padding: 30px; }
+        .pontuacao { font-size: 4rem; font-weight: bold; color: var(--azul-ue); }
+        .medalha { font-size: 5rem; margin: 15px 0; }
+
+        /* ===== ATIVIDADE 3: MAPA MENTAL ===== */
+        .mapa-mental { display: flex; flex-direction: column; gap: 15px; }
+        .categoria {
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .categoria-titulo {
+            padding: 15px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: 0.3s;
+        }
+        .categoria-titulo:hover { opacity: 0.85; }
+        .cat-economia .categoria-titulo { background: #fff3e0; color: var(--laranja); }
+        .cat-ambiente .categoria-titulo { background: #e8f5e9; color: var(--verde-agri); }
+        .cat-sociedade .categoria-titulo { background: #e3f2fd; color: var(--azul-ue); }
+        .cat-territorio .categoria-titulo { background: #f3e5f5; color: var(--roxo); }
+
+        .categoria-corpo {
+            padding: 15px 20px;
+            display: none;
+            background: white;
+        }
+        .categoria.aberta .categoria-corpo { display: block; }
+        .categoria.aberta .seta { transform: rotate(180deg); }
+        .seta { transition: 0.3s; }
+
+        .input-ideia {
+            width: 70%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+        .btn-add {
+            padding: 10px 18px;
+            background: var(--azul-ue);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+        .lista-ideias { list-style: none; margin-top: 12px; }
+        .lista-ideias li {
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .btn-remover {
+            background: none;
+            border: none;
+            color: #c62828;
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+
+        /* ===== ATIVIDADE 4: DEBATE ===== */
+        .cronometro {
+            text-align: center;
+            padding: 30px;
+        }
+        .tempo-display {
+            font-size: 5rem;
+            font-weight: bold;
+            color: var(--azul-ue);
+            font-variant-numeric: tabular-nums;
+            margin: 20px 0;
+        }
+        .fase-debate {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .botoes-cronometro {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .btn-crono {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: 0.2s;
+        }
+        .btn-crono:hover { transform: scale(1.05); }
+        .btn-iniciar { background: var(--verde-agri); color: white; }
+        .btn-pausar { background: var(--amarelo); color: #333; }
+        .btn-repor { background: #c62828; color: white; }
+
+        .argumento-box {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e8eaf6;
+            border-radius: 12px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-style: italic;
+        }
+
+        /* ===== BOTÃO VOLTAR ===== */
+        .voltar {
+            display: inline-block;
+            margin: 20px;
+            padding: 10px 20px;
+            color: var(--azul-ue);
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            .tempo-display { font-size: 3.5rem; }
+            .input-ideia { width: 100%; margin-bottom: 8px; }
+            .btn-add { margin-left: 0; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>🎯 Atividades Interativas: PAC em Portugal</h1>
+    <p>Geografia A · 11º Ano · Aprende fazendo!</p>
+</header>
+
+<nav class="tabs">
+    <button class="tab-btn active" onclick="mudarTab('simulador', this)">🏛️ Ministro por um Dia</button>
+    <button class="tab-btn" onclick="mudarTab('quiz', this)">❓ Quiz PAC</button>
+    <button class="tab-btn" onclick="mudarTab('mapamental', this)">🧠 Mapa Mental</button>
+    <button class="tab-btn" onclick="mudarTab('debate', this)">🎤 Sala de Debate</button>
+</nav>
+
+<!-- ============================================ -->
+<!-- ATIVIDADE 1: SIMULADOR MINISTRO POR UM DIA   -->
+<!-- ============================================ -->
+<section id="simulador" class="seccao ativa">
+    <div class="cartao">
+        <h2>🏛️ Ministro da Agricultura por um Dia</h2>
+        <p class="descricao">
+            Tens <strong>€1.240 milhões</strong> do Pilar 2 da PAC para distribuir.
+            Ajusta os controlos e descobre se as tuas escolhas são equilibradas!
+        </p>
+
+        <div class="slider-grupo">
+            <label>👨‍🌾 Jovens Agricultores <span class="valor-slider" id="val-jovens">0 M€</span></label>
+            <input type="range" min="0" max="500" value="0" data-nome="jovens" oninput="atualizarSimulador()">
+        </div>
+
+        <div class="slider-grupo">
+            <label>💻 Modernização Tecnológica <span class="valor-slider" id="val-tec">0 M€</span></label>
+            <input type="range" min="0" max="500" value="0" data-nome="tecnologia" oninput="atualizarSimulador()">
+        </div>
+
+        <div class="slider-grupo">
+            <label>🌱 Agricultura Biológica <span class="valor-slider" id="val-bio">0 M€</span></label>
+            <input type="range" min="0" max="500" value="0" data-nome="bio" oninput="atualizarSimulador()">
+        </div>
+
+        <div class="slider-grupo">
+            <label>💧 Gestão da Água <span class="valor-slider" id="val-agua">0 M€</span></label>
+            <input type="range" min="0" max="500" value="0" data-nome="agua" oninput="atualizarSimulador()">
+        </div>
+
+        <div class="slider-grupo">
+            <label>🏡 Turismo Rural <span class="valor-slider" id="val-turismo">0 M€</span></label>
+            <input type="range" min="0" max="500" value="0" data-nome="turismo" oninput="atualizarSimulador()">
+        </div>
+
+        <div class="slider-grupo">
+            <label>🔬 Investigação e Inovação <span class="valor-slider" id="val-invest">0 M€</span></label>
+            <input type="range" min="0" max="500" value="0" data-nome="investigacao" oninput="atualizarSimulador()">
+        </div>
+
+        <div class="slider-grupo">
+            <label>👪 Pequenos Agricultores Familiares <span class="valor-slider" id="val-familia">0 M€</span></label>
+            <input type="range" min="0" max="500" value="0" data-nome="familia" oninput="atualizarSimulador()">
+        </div>
+
+        <div class="total-box" id="totalBox">
+            <div>Total Alocado</div>
+            <div class="total-valor" id="totalValor">0 M€</div>
+            <div style="font-size: 0.9rem; color: #666;">Objetivo: €1.240 M</div>
+            <div class="barra-progresso">
+                <div class="barra-preenchimento" id="barraProgresso"></div>
+            </div>
+        </div>
+
+        <button class="btn-principal" onclick="avaliarDistribuicao()">✅ Avaliar a Minha Distribuição</button>
+
+        <div class="feedback-box" id="feedbackSimulador"></div>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- ATIVIDADE 2: QUIZ                            -->
+<!-- ============================================ -->
+<section id="quiz" class="seccao">
+    <div class="cartao" id="quizContainer">
+        <div class="quiz-progresso">
+            <span id="quizContador">Pergunta 1 de 15</span>
+            <span>Pontos: <span id="quizPontos">0</span></span>
+        </div>
+        <div class="pergunta" id="perguntaTexto"></div>
+        <div id="opcoesContainer"></div>
+        <div class="quiz-feedback" id="quizFeedback"></div>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- ATIVIDADE 3: MAPA MENTAL                     -->
+<!-- ============================================ -->
+<section id="mapamental" class="seccao">
+    <div class="cartao">
+        <h2>🧠 Mapa Mental Colaborativo</h2>
+        <p class="descricao">
+            Constrói o teu mapa mental sobre os <strong>impactos da PAC em Portugal</strong>.
+            Adiciona pelo menos 3 ideias em cada categoria. As tuas respostas ficam guardadas neste navegador!
+        </p>
+
+        <div class="mapa-mental">
+            <div class="categoria cat-economia" id="cat-economia">
+                <div class="categoria-titulo" onclick="alternarCategoria('cat-economia')">
+                    💰 Economia <span class="seta">▼</span>
+                </div>
+                <div class="categoria-corpo">
+                    <input type="text" class="input-ideia" id="input-economia" placeholder="Ex: Aumento das exportações de vinho...">
+                    <button class="btn-add" onclick="adicionarIdeia('economia')">+ Adicionar</button>
+                    <ul class="lista-ideias" id="lista-economia"></ul>
+                </div>
+            </div>
+
+            <div class="categoria cat-ambiente" id="cat-ambiente">
+                <div class="categoria-titulo" onclick="alternarCategoria('cat-ambiente')">
+                    🌿 Ambiente <span class="seta">▼</span>
+                </div>
+                <div class="categoria-corpo">
+                    <input type="text" class="input-ideia" id="input-ambiente" placeholder="Ex: Preservação dos socalcos do Douro...">
+                    <button class="btn-add" onclick="adicionarIdeia('ambiente')">+ Adicionar</button>
+                    <ul class="lista-ideias" id="lista-ambiente"></ul>
+                </div>
+            </div>
+
+            <div class="categoria cat-sociedade" id="cat-sociedade">
+                <div class="categoria-titulo" onclick="alternarCategoria('cat-sociedade')">
+                    👥 Sociedade <span class="seta">▼</span>
+                </div>
+                <div class="categoria-corpo">
+                    <input type="text" class="input-ideia" id="input-sociedade" placeholder="Ex: Fixação de jovens no interior...">
+                    <button class="btn-add" onclick="adicionarIdeia('sociedade')">+ Adicionar</button>
+                    <ul class="lista-ideias" id="lista-sociedade"></ul>
+                </div>
+            </div>
+
+            <div class="categoria cat-territorio" id="cat-territorio">
+                <div class="categoria-titulo" onclick="alternarCategoria('cat-territorio')">
+                    🗺️ Território <span class="seta">▼</span>
+                </div>
+                <div class="categoria-corpo">
+                    <input type="text" class="input-ideia" id="input-territorio" placeholder="Ex: Combate ao abandono rural...">
+                    <button class="btn-add" onclick="adicionarIdeia('territorio')">+ Adicionar</button>
+                    <ul class="lista-ideias" id="lista-territorio"></ul>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-principal" style="margin-top: 20px;" onclick="verResumoMapa()">📋 Ver Resumo do Meu Mapa</button>
+        <div class="feedback-box" id="feedbackMapa"></div>
+    </div>
+</section>
+
+<!-- ============================================ -->
+<!-- ATIVIDADE 4: SALA DE DEBATE                  -->
+<!-- ============================================ -->
+<section id="debate" class="seccao">
+    <div class="cartao">
+        <h2>🎤 Sala de Debate: "A PAC deve acabar?"</h2>
+        <p class="descricao">
+            Usa o cronómetro para gerir o debate na turma.
+            Grupo A defende a PAC · Grupo B contra · Grupo C modera.
+        </p>
+
+        <div class="cronometro">
+            <div class="fase-debate" id="faseDebate">Fase: Apresentação dos Grupos (5 min cada)</div>
+            <div class="tempo-display" id="tempoDisplay">05:00</div>
+            <div class="botoes-cronometro">
+                <button class="btn-crono btn-iniciar" onclick="iniciarCronometro()">▶ Iniciar</button>
+                <button class="btn-crono btn-pausar" onclick="pausarCronometro()">⏸ Pausar</button>
+                <button class="btn-crono btn-repor" onclick="reporCronometro()">↺ Repor</button>
+            </div>
+            <div class="botoes-cronometro" style="margin-top: 15px;">
+                <button class="btn-crono" style="background:#e8eaf6;" onclick="definirFase(300, 'Fase: Apresentação dos Grupos (5 min cada)')">Fase 1 · 5 min</button>
+                <button class="btn-crono" style="background:#e8eaf6;" onclick="definirFase(600, 'Fase: Debate Livre (10 min)')">Fase 2 · 10 min</button>
+                <button class="btn-crono" style="background:#e8eaf6;" onclick="definirFase(300, 'Fase: Conclusões (5 min)')">Fase 3 · 5 min</button>
+            </div>
+        </div>
+
+        <button class="btn-principal" onclick="gerarArgumento()">🎲 Gerar Argumento Aleatório</button>
+        <div class="argumento-box" id="argumentoBox">
+            Clica no botão acima para receberes um argumento para defenderes ou refutares!
+        </div>
+    </div>
+</section>
+
+<a href="index.html" class="voltar">← Voltar ao Menu Principal</a>
+
+<script>
+/* ================================================
+   NAVEGAÇÃO POR SEPARADORES
+================================================ */
+function mudarTab(id, botao) {
+    document.querySelectorAll('.seccao').forEach(s => s.classList.remove('ativa'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('ativa');
+    botao.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ================================================
+   ATIVIDADE 1: SIMULADOR
+================================================ */
+const ORCAMENTO_TOTAL = 1240;
+
+function atualizarSimulador() {
+    const sliders = document.querySelectorAll('#simulador input[type="range"]');
+    let total = 0;
+    const valores = {};
+
+    sliders.forEach(s => {
+        const valor = parseInt(s.value);
+        valores[s.dataset.nome] = valor;
+        total += valor;
+    });
+
+    document.getElementById('val-jovens').textContent = valores.jovens + ' M€';
+    document.getElementById('val-tec').textContent = valores.tecnologia + ' M€';
+    document.getElementById('val-bio').textContent = valores.bio + ' M€';
+    document.getElementById('val-agua').textContent = valores.agua + ' M€';
+    document.getElementById('val-turismo').textContent = valores.turismo + ' M€';
+    document.getElementById('val-invest').textContent = valores.investigacao + ' M€';
+    document.getElementById('val-familia').textContent = valores.familia + ' M€';
+
+    document.getElementById('totalValor').textContent = total + ' M€';
+
+    const percentagem = Math.min((total / ORCAMENTO_TOTAL) * 100, 100);
+    const barra = document.getElementById('barraProgresso');
+    barra.style.width = percentagem + '%';
+
+    const totalBox = document.getElementById('totalBox');
+    if (total > ORCAMENTO_TOTAL) {
+        totalBox.classList.add('excesso');
+        barra.style.background = '#c62828';
+    } else if (total === ORCAMENTO_TOTAL) {
+        totalBox.classList.remove('excesso');
+        barra.style.background = 'linear-gradient(90deg, #2E7D32, #66bb6a)';
+    } else {
+        totalBox.classList.remove('excesso');
+        barra.style.background = 'linear-gradient(90deg, #F9A825, #fbc02d)';
+    }
+
+    return { total, valores };
+}
+
+function avaliarDistribuicao() {
+    const { total, valores } = atualizarSimulador();
+    const feedback = document.getElementById('feedbackSimulador');
+    let mensagens = [];
+    let tipo = 'sucesso';
+
+    if (total !== ORCAMENTO_TOTAL) {
+        feedback.className = 'feedback-box erro';
+        feedback.innerHTML = '⚠️ <strong>Atenção!</strong> A tua distribuição soma <strong>' + total + ' M€</strong>, mas o orçamento é de <strong>€1.240 M</strong>. ' +
+            (total < ORCAMENTO_TOTAL ? 'Ainda te faltam ' + (ORCAMENTO_TOTAL - total) + ' M€ por distribuir.' : 'Estás a gastar ' + (total - ORCAMENTO_TOTAL) + ' M€ a mais!');
+        return;
+    }
+
+    if (valores.jovens >= 250) mensagens.push('✅ <strong>Excelente!</strong> Apostas forte no futuro com os jovens agricultores.');
+    else if (valores.jovens < 100) { mensagens.push('⚠️ Estás a investir pouco nos jovens. Sem renovação geracional, o campo português não tem futuro.'); tipo = 'aviso'; }
+
+    if (valores.tecnologia < 100) { mensagens.push('⚠️ Cuidado! Sem digitalização, a agricultura portuguesa ficará para trás na Europa.'); tipo = 'aviso'; }
+
+    if (valores.bio >= 300) mensagens.push('✅ Ambicioso na transição ecológica! Mas garante que há mercado para absorver a produção.');
+    else if (valores.bio < 80) { mensagens.push('⚠️ A meta da UE é 25% de área biológica até 2030. Este investimento pode ser insuficiente.'); tipo = 'aviso'; }
+
+    if (valores.agua < 150) { mensagens.push('⚠️ Com as secas cada vez mais frequentes, a gestão da água devia ser prioridade (Alentejo e Algarve agradeciam mais!).'); tipo = 'aviso'; }
+
+    if (valores.familia < 100) { mensagens.push('⚠️ Estás a negligenciar a agricultura familiar, essencial para a coesão do interior.'); tipo = 'aviso'; }
+
+    if (valores.turismo > 350) { mensagens.push('💡 Muito turismo é bom, mas não esqueças que a prioridade da PAC é a produção agrícola!'); tipo = 'aviso'; }
+
+    if (mensagens.length === 0) {
+        mensagens.push('🏆 <strong>Distribuição exemplar!</strong> Conseguiste equilibrar economia, ambiente e coesão social. Um verdadeiro Ministro da Agricultura!');
+    }
+
+    feedback.className = 'feedback-box ' + tipo;
+    feedback.innerHTML = '<strong>📊 Avaliação da tua política agrícola:</strong><br><br>' + mensagens.join('<br><br>');
+}
+
+/* ================================================
+   ATIVIDADE 2: QUIZ
+================================================ */
+const perguntas = [
+    { p: "Quando entrou Portugal na CEE (atual UE)?", o: ["1975", "1986", "1992", "2004"], c: 1 },
+    { p: "Qual o pilar da PAC com maior orçamento em Portugal?", o: ["Pilar 1 - Apoios Diretos", "Pilar 2 - Desenvolvimento Rural", "Ambos têm o mesmo valor", "Nenhum"], c: 0 },
+    { p: "O que significa 'desacoplamento' (reforma de 2003)?", o: ["Separar os pagamentos da produção", "Desligar máquinas agrícolas", "Dividir propriedades", "Cortar todos os subsídios"], c: 0 },
+    { p: "Qual é a idade média dos agricultores portugueses?", o: ["45 anos", "55 anos", "Mais de 65 anos", "35 anos"], c: 2 },
+    { p: "Qual região portuguesa recebe mais fundos PAC por hectare?", o: ["Norte", "Centro", "Alentejo", "Algarve"], c: 2 },
+    { p: "Como se chama o programa de Desenvolvimento Rural 2023-2027?", o: ["PRODER III", "PDR 2030", "PEDAP", "Portugal 2030"], c: 1 },
+    { p: "Qual a meta da UE para a área agrícola em modo biológico até 2030?", o: ["10%", "15%", "25%", "50%"], c: 2 },
+    { p: "O que são 'eco-esquemas'?", o: ["Impostos ambientais", "Pagamentos extra por práticas sustentáveis", "Multas por poluição", "Subsídios a combustíveis fósseis"], c: 1 },
+    { p: "Qual o principal problema estrutural da agricultura portuguesa?", o: ["Excesso de jovens agricultores", "Envelhecimento dos agricultores", "Demasiada tecnologia", "Excesso de água"], c: 1 },
+    { p: "O que é o POSEI?", o: ["Programa para o interior despovoado", "Programa para regiões ultraperiféricas (Açores e Madeira)", "Programa de seguros agrícolas", "Programa de exportação"], c: 1 },
+    { p: "Que percentagem de agricultores portugueses tem menos de 35 anos?", o: ["15%", "10%", "Cerca de 5%", "25%"], c: 2 },
+    { p: "Qual o cultivo que mais expandiu em Portugal na última década?", o: ["Milho", "Olival intensivo", "Batata", "Arroz"], c: 1 },
+    { p: "O que significa a sigla SAU?", o: ["Serviço de Apoio Urbano", "Superfície Agrícola Utilizada", "Sistema Agrícola Unificado", "Sociedade de Agricultores Unidos"], c: 1 },
+    { p: "Qual era o principal objetivo da PAC em 1962?", o: ["Proteger o ambiente", "Aumentar a produção e garantir alimento", "Promover o turismo rural", "Digitalizar a agricultura"], c: 1 },
+    { p: "Qual o orçamento total da PAC para Portugal em 2023-2027?", o: ["€1,2 mil milhões", "€2,5 mil milhões", "€5,04 mil milhões", "€10 mil milhões"], c: 2 }
+];
+
+let perguntaAtual = 0;
+let pontos = 0;
+
+function mostrarPergunta() {
+    const q = perguntas[perguntaAtual];
+    document.getElementById('quizContador').textContent = 'Pergunta ' + (perguntaAtual + 1) + ' de ' + perguntas.length;
+    document.getElementById('perguntaTexto').textContent = q.p;
+    document.getElementById('quizFeedback').style.display = 'none';
+
+    const container = document.getElementById('opcoesContainer');
+    container.innerHTML = '';
+    q.o.forEach((opcao, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'opcao';
+        btn.textContent = opcao;
+        btn.onclick = () => responder(i, btn);
+        container.appendChild(btn);
+    });
+}
+
+function responder(indice, botao) {
+    const q = perguntas[perguntaAtual];
+    const botoes = document.querySelectorAll('.opcao');
+    botoes.forEach(b => b.disabled = true);
+
+    const feedback = document.getElementById('quizFeedback');
+
+    if (indice === q.c) {
+        botao.classList.add('correta');
+        pontos++;
+        feedback.textContent = '✅ Correto! Muito bem!';
+        feedback.style.background = '#c8e6c9';
+        feedback.style.color = '#1b5e20';
+    } else {
+        botao.classList.add('errada');
+        botoes[q.c].classList.add('correta');
+        feedback.textContent = '❌ Não era essa. A resposta certa está destacada a verde.';
+        feedback.style.background = '#ffcdd2';
+        feedback.style.color = '#b71c1c';
+    }
+    feedback.style.display = 'block';
+    document.getElementById('quizPontos').textContent = pontos;
+
+    setTimeout(() => {
+        perguntaAtual++;
+        if (perguntaAtual < perguntas.length) {
+            mostrarPergunta();
+        } else {
+            mostrarResultado();
+        }
+    }, 2000);
+}
+
+function mostrarResultado() {
+    const percentagem = Math.round((pontos / perguntas.length) * 100);
+    let medalha, mensagem;
+
+    if (percentagem >= 90) { medalha = '🏆'; mensagem = 'Expert em PAC! Dominas o tema completamente!'; }
+    else if (percentagem >= 70) { medalha = '🥈'; mensagem = 'Muito bom! Tens um conhecimento sólido.'; }
+    else if (percentagem >= 50) { medalha = '🥉'; mensagem = 'Razoável, mas precisas de rever a matéria.'; }
+    else { medalha = '📚'; mensagem = 'Vamos estudar mais! Volta a explorar o StoryMap.'; }
+
+    document.getElementById('quizContainer').innerHTML =
+        '<div class="resultado-final">' +
+        '<div class="medalha">' + medalha + '</div>' +
+        '<div class="pontuacao">' + pontos + '/' + perguntas.length + '</div>' +
+        '<p style="margin: 15px 0; font-size: 1.1rem;">' + mensagem + '</p>' +
+        '<button class="btn-principal" onclick="location.reload()">🔄 Tentar Novamente</button>' +
+        '</div>';
+}
+
+/* ================================================
+   ATIVIDADE 3: MAPA MENTAL
+================================================ */
+function alternarCategoria(id) {
+    document.getElementById(id).classList.toggle('aberta');
+}
+
+function adicionarIdeia(categoria) {
+    const input = document.getElementById('input-' + categoria);
+    const texto = input.value.trim();
+    if (texto === '') return;
+
+    const lista = document.getElementById('lista-' + categoria);
+    const li = document.createElement('li');
+    li.innerHTML = '<span>' + texto + '</span><button class="btn-remover" onclick="this.parentElement.remove(); guardarMapa();">✕</button>';
+    lista.appendChild(li);
+    input.value = '';
+    guardarMapa();
+}
+
+function guardarMapa() {
+    const dados = {};
+    ['economia', 'ambiente', 'sociedade', 'territorio'].forEach(cat => {
+        const itens = Array.from(document.querySelectorAll('#lista-' + cat + ' li span')).map(li => li.textContent);
+        dados[cat] = itens;
+    });
+    localStorage.setItem('mapaMentalPAC', JSON.stringify(dados));
+}
+
+function carregarMapa() {
+    const guardado = localStorage.getItem('mapaMentalPAC');
+    if (!guardado) return;
+    const dados = JSON.parse(guardado);
+    Object.keys(dados).forEach(cat => {
+        const lista = document.getElementById('lista-' + cat);
+        dados[cat].forEach(texto => {
+            const li = document.createElement('li');
+            li.innerHTML = '<span>' + texto + '</span><button class="btn-remover" onclick="this.parentElement.remove(); guardarMapa();">✕</button>';
+            lista.appendChild(li);
+        });
+    });
+}
+
+function verResumoMapa() {
+    const cats = ['economia', 'ambiente', 'sociedade', 'territorio'];
+    let total = 0;
+    let resumo = '<strong>📋 O teu mapa mental:</strong><br><br>';
+
+    cats.forEach(cat => {
+        const n = document.querySelectorAll('#lista-' + cat + ' li').length;
+        total += n;
+        const icone = { economia: '💰', ambiente: '🌿', sociedade: '👥', territorio: '🗺️' }[cat];
+        resumo += icone + ' <strong>' + cat.charAt(0).toUpperCase() + cat.slice(1) + ':</strong> ' + n + ' ideia(s) ' + (n >= 3 ? '✅' : '⚠️ (precisas de pelo menos 3)') + '<br>';
+    });
+
+    resumo += '<br><strong>Total: ' + total + ' ideias.</strong> ';
+    resumo += total >= 12 ? '🏆 Excelente trabalho! Tens um mapa mental completo!' : '💡 Continua a desenvolver. Objetivo: mínimo 12 ideias (3 por categoria).';
+
+    const feedback = document.getElementById('feedbackMapa');
+    feedback.className = 'feedback-box sucesso';
+    feedback.innerHTML = resumo;
+}
+
+/* ================================================
+   ATIVIDADE 4: CRONÓMETRO DE DEBATE
+================================================ */
+let tempoRestante = 300;
+let intervaloCrono = null;
+
+function atualizarDisplay() {
+    const min = Math.floor(tempoRestante / 60).toString().padStart(2, '0');
+    const seg = (tempoRestante % 60).toString().padStart(2, '0');
+    document.getElementById('tempoDisplay').textContent = min + ':' + seg;
+}
+
+function iniciarCronometro() {
+    if (intervaloCrono) return;
+    intervaloCrono = setInterval(() => {
+        if (tempoRestante > 0) {
+            tempoRestante--;
+            atualizarDisplay();
+        } else {
+            clearInterval(intervaloCrono);
+            intervaloCrono = null;
+            document.getElementById('tempoDisplay').textContent = '⏰ TEMPO!';
+        }
+    }, 1000);
+}
+
+function pausarCronometro() {
+    clearInterval(intervaloCrono);
+    intervaloCrono = null;
+}
+
+function reporCronometro() {
+    pausarCronometro();
+    tempoRestante = 300;
+    atualizarDisplay();
+}
+
+function definirFase(segundos, texto) {
+    pausarCronometro();
+    tempoRestante = segundos;
+    document.getElementById('faseDebate').textContent = texto;
+    atualizarDisplay();
+}
+
+const argumentos = [
+    "🟢 A FAVOR: Sem a PAC, os socalcos do Douro (Património UNESCO) seriam abandonados em menos de uma década.",
+    "🟢 A FAVOR: A PAC garante que os agricultores tenham rendimento estável mesmo em anos de seca ou crise.",
+    "🟢 A FAVOR: Os fundos da PAC modernizaram a agricultura portuguesa, que em 1986 era de subsistência.",
+    "🔴 CONTRA: 20% dos beneficiários recebem 80% dos fundos. É uma distribuição injusta!",
+    "🔴 CONTRA: A burocracia é tão complexa que muitos agricultores idosos nem conseguem candidatar-se.",
+    "🔴 CONTRA: O olival superintensivo no Alentejo esgota os aquíferos, apesar dos apoios da PAC.",
+    "🟡 DESAFIO: Como convencer um jovem de 25 anos a tornar-se agricultor em Trás-os-Montes?",
+    "🟡 DESAFIO: Se a PAC acabasse amanhã, o que aconteceria ao preço do pão, do leite e do vinho?",
+    "🟢 A FAVOR: Os eco-esquemas da nova PAC premiam quem protege a biodiversidade e o clima.",
+    "🔴 CONTRA: Portugal ainda importa 70% dos cereais que consome. A PAC falhou na soberania alimentar!"
+];
+
+function gerarArgumento() {
+    const box = document.getElementById('argumentoBox');
+    box.style.opacity = '0';
+    setTimeout(() => {
+        box.textContent = argumentos[Math.floor(Math.random() * argumentos.length)];
+        box.style.transition = 'opacity 0.5s';
+        box.style.opacity = '1';
+    }, 300);
+}
+
+/* ================================================
+   INICIALIZAÇÃO
+================================================ */
+mostrarPergunta();
+carregarMapa();
+atualizarDisplay();
+</script>
+
+</body>
+</html>
